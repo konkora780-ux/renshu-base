@@ -2151,6 +2151,168 @@ function pack9Data(P,I,T,L){
   return {cards,figs,plans};
 }
 
+/* ========== 練習集 第9弾（2026-10追加・27枚） ========== */
+// 三重県サッカー協会セントラルトレセンのトレーニングレポート（2023年度・2024年度）をもとにした27枚。
+// 文章は要点の言いかえ、図は描きおこし。資料にある個人名・学校名は入れない。すでに入れた練習と同じものは省いた。
+function pack10Data(P,I,T,L){
+  const mi=(y,n,t,p)=>({type:'jfa',title:'三重県サッカー協会 セントラルトレセン トレーニングレポート '+y+'年度 第'+n+'回（'+t+'）',url:'https://www.fa-mie.jp/wp/wp-content/uploads/'+p+'.pdf'});
+  const a1=mi(2023,1,'守備の原理原則','2023/11/fd0e1a66bb80c9777efabb8bc6c2a1bf'),a3=mi(2023,3,'ビルドアップ','2023/11/078100f2d26aab731fdbcd29d19186ec'),
+    a4=mi(2023,4,'ゴール前の突破','2023/12/d095be5de32669493d379beb9bffe795'),a5=mi(2023,5,'ゴール前の攻防','2023/12/05f799247fbc10685ce62978201dcfa2'),
+    a6=mi(2023,6,'観て判断する・関わる','2023/12/a7c0314322ac814ea2a998932f2bd312'),a7=mi(2023,7,'守備の原理原則','2024/02/7f970bba71446c21f921734690f41047'),
+    a8=mi(2023,8,'中盤の攻防','2024/02/6b1b0b15efb7d613bd0bc856aca63e64'),a9=mi(2023,9,'ボールを奪う','2024/02/645cd4206e3a7880b9d86b617145386c'),
+    b1=mi(2024,1,'守備の基本戦術','2024/10/7e3e66161a69cf2d807eb19739e58c7a'),b2=mi(2024,2,'攻撃の一般戦術','2024/11/4d025dd332a39e4fdfbf4e998c445b1a'),
+    b3=mi(2024,3,'ゴール前の守備','2024/11/f1c637b3665aad0fe971924289347458'),b4=mi(2024,4,'ゴールを目指す','2024/11/c9ae7f76630107f95c20a9e16ed1c05e'),
+    b5=mi(2024,5,'意図的にボールを奪う','2025/01/619046237c889e883e8c67cc5a6d207a');
+  const box=(x1,y1,x2,y2)=>[L('line',x1,y1,x2,y1),L('line',x2,y1,x2,y2),L('line',x2,y2,x1,y2),L('line',x1,y2,x1,y1)];
+  const U=['U-15'],G=(x,y)=>P('G',x,y,180),GL=P('G',95,350,90),GR=P('G',905,350,270);
+  const kPC='観る、ステップワーク、体の向き、パススピード\nスペースを見つけて受ける。状況によってプレーを変える\n攻撃方向を意識したファーストタッチ\nアイコンタクト';
+  const kDef='1stDFがスイッチになる。2nd・3rdDFの役割\nマーク、スペース、コースを同時に意識する\nコーチング\nコンパクトに守る。奪いどころを共有する';
+  const kAtk='優先順位（シュート、仕掛ける、背後をねらう）\nコンビネーション（ワンツー、3人目）。観てかけひき\n連続した攻守の切りかえ\nボールを追いこす動き';
+  const cards=[
+    {id:'p10-n1',src:a1,ages:U,name:'パス＆コントロール（ひし形4グリッド・3グループ）',cats:['wup'],themes:['パス＆コントロール','コンビネーション'],size:'18m×14mのひし形を4つ（別の回は22m×18m、15m×15mを5つ）',equip:['ボール','マーカー','ビブス'],opIds:['p9-m3'],
+     method:'3グループ（3色）が同時に、4つのグリッドを使ってパスをつなぐ\nワンツー、フリック、1つ飛ばし、落としを入れる\nまん中のグリッドで受ける時は、タイミングよく入る',
+     keys:kPC,notes:'試合をイメージしながら、意思を表すこと、観て判断すること、5人全員が関わることを意識させる'},
+    {id:'p10-n2',src:a1,ages:U,name:'3対3＋サーバー＆ターゲット（ライン突破・守備の原則）',cats:['tr1'],themes:['ボールを奪う','チャレンジ＆カバー'],minP:8,maxP:8,size:'25m×30m（別の回は20m×30m）',equip:['ボール','マーカー','ビブス'],opIds:['p9-w12'],
+     method:'アウトオブプレーは、コーチの配球から\nサーバーとターゲットは1タッチ（リターンはワンタッチ）\nサーバーへのリターンに制限をつける：リターンなし → 1回だけあり → あり',
+     keys:'守備の原則。コーチング。1stDFがスイッチになる\n2nd・3rdDFの役割。マーク、スペース、コース\nサーバーとターゲットへの働きかけ',
+     notes:'段階ごとのねらい：① サーバーもターゲットもなし…どんどん奪いに行く　② サーバーあり…ポジションを取り続けながら奪いに行く　③ サーバーとターゲットあり…マーク、パスコース、スペース、プレスバック\n1対1が3つにならないように、お互いを見合いながら奪いどころを共有する'},
+    {id:'p10-n3',src:a1,ages:U,name:'6対6＋GK（3-3のマッチアップ・守備）',cats:['tr2'],themes:['ボールを奪う','チャレンジ＆カバー'],minP:14,maxP:14,gk:true,size:'52.5m×40〜44m（5対5＋GKの時は60m×45m）',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p4-a5'],
+     method:'3-3の形でマッチアップする\nアウトオブプレーは、コーチの配球から',
+     keys:'はさんで奪う（サンド）\nマークとスペースとコースを意識する\nコンパクト',notes:'コンパクトな状況から、1stDFのスイッチで全員が奪いに行く。プレスバックからはさんで奪う\nボールの状況に合わせて、立つ位置が少しずつ変わることを強調する'},
+    {id:'p10-n4',src:a1,ages:U,name:'7対7＋GK（2-3-2のマッチアップ）',cats:['game'],themes:['ボールを奪う','ゴールを奪う（シュート）'],minP:16,maxP:16,gk:true,size:'72m×55〜60m（少年用コート）',equip:['ボール','ゴール','マーカー','ビブス'],
+     method:'2-3-2の形でマッチアップする',
+     keys:'コーチング\nコンパクト\n奪いどころの共有\n高いインテンシティと、連続した攻守の切りかえ',notes:'前線からのハイプレスと、それにともなうコンパクトな守備で、意図を持って奪う'},
+    {id:'p10-n5',src:a3,ages:U,name:'パス＆コントロール（六角形・8の字）',cats:['wup'],themes:['パス＆コントロール','ビルドアップ'],size:'1辺15mの六角形',equip:['ボール','コーン'],opIds:['p5-c3'],
+     method:'ボールは2個以上。準備ができたら出す\n① 8の字にパスワーク、ドリブル\n② 落として、奥の選手へパス。ワンツー',
+     keys:'観る\nパスの質（正確さ、スピード）\nサポートの位置（距離、角度、タイミング）\nファーストタッチの質',notes:'味方のミスや、意図が合わなかった時に、うまく直す技術も求める'},
+    {id:'p10-n6',src:a3,ages:U,name:'4対4＋2サーバー（ドリブルでライン通過）',cats:['tr1'],themes:['ビルドアップ','ポゼッション'],minP:10,maxP:10,size:'40m×30m',equip:['ボール','マーカー','ビブス'],opIds:['p5-m2'],
+     method:'コーチの配球でスタート\nドリブルでラインを通過したら得点\n後ろのサーバーへパスしてよい（2タッチ以下）\n前のターゲットへパスしてよい（1タッチだけ）',
+     keys:'観る（相手、味方）\n攻撃方向の意識（優先順位、背後をねらう）\nサポートを取り続ける\nボールの置きどころ、立つ位置\nマークの原則。奪いどころの共有',notes:'背後をねらう意識は大事にしつつ、ねらえない時は自分たちでボールを保持する判断をさせる'},
+    {id:'p10-n7',src:a3,ages:U,name:'6対6＋1GK（ライン通過 対 シュート）',cats:['tr2'],themes:['ビルドアップ'],minP:13,maxP:13,gk:true,size:'50m×50m',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p5-c5'],
+     method:'コーチの配球でスタート\nGKのいるチームは、3-1-2の形で組み立て、ラインを通過したら得点\n相手チームは、奪ったらシュートを目指す\nオフサイドあり（奪ってゴールへ向かう側）',
+     keys:'観る（相手、味方）\n攻撃方向の意識（優先順位、背後をねらう）\nボールを失わない（サポート、判断）\n守備の連携。奪いどころの共有',notes:'自陣であることを意識して、リスクの少ない選択をさせる'},
+    {id:'p10-n8',src:a4,ages:U,name:'パス＆シュート（4人の順にパスしてシュート）',cats:['wup'],themes:['ゴールを奪う（シュート）','コンビネーション'],gk:true,size:'縦12m＋12m、横12m＋12m',equip:['ボール','ゴール','コーン'],
+     method:'① ①→②→③→④の順にパスをつなぎ、④がシュート\n② ②③④の3人で、コンビネーションからシュート',
+     keys:'受け手と出し手のタイミング\nコンビネーションのアイデア\nファーストタッチ\nパススピード\nシュートの精度',notes:'ファーストタッチで角度をつけたり、持ち出したりすると、いろいろな場面のシュートになる'},
+    {id:'p10-n9',src:a4,ages:U,name:'4対4＋GK（2点先取）',cats:['tr2'],themes:['ゴール前の攻防','ゴールを奪う（シュート）'],minP:10,maxP:10,gk:true,size:'40m×44m',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p6-o11'],
+     method:'コーチの配球から、4対4＋GK\n2点先に取った方の勝ち。プレーが長くなったら終了',
+     keys:'優先順位（シュート、背後へのアクション）\n連続したプレー\n攻守の切りかえ\nコンビネーション\nボールを奪うか、ゴールを守るかの判断\nチャレンジ＆カバー'},
+    {id:'p10-n10',src:a5,ages:U,name:'パス＆コントロール＆シュート（台形・2トップ）',cats:['wup'],themes:['ゴールを奪う（シュート）','コンビネーション'],gk:true,size:'縦16m、横6〜10mの台形。2か所',equip:['ボール','ゴール','コーン'],opIds:['p5-b6'],
+     method:'出し手から、前の2人（2トップ）のどちらかへパスを出してシュート\nプルアウェイ、カットイン、ターン、3人目の動きを入れる\n出し手は、1タッチで前をのぞいても、2タッチで持ち出してもよい',
+     keys:'観る、タイミング、ステップワーク、体の向き、パススピード\nスペースを見つけて受ける。状況によってプレーを変える\n攻撃方向を意識したファーストタッチ\nシュートの精度',notes:'受け手は、いつ、どこでほしいのかを動きで伝える。出し手は、ラストパスの質にこだわる'},
+    {id:'p10-n11',src:a5,ages:U,name:'5対5＋GK（3-2の2ライン）',cats:['tr2'],themes:['ゴール前の攻防','チャレンジ＆カバー'],minP:12,maxP:12,gk:true,size:'50m×40m（回によって30m×50m、40m×50m、50m×60m）',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p5-w6'],
+     method:'3-2の2ラインで行う\nアウトオブプレーは、コーチの配球から\nオフサイドあり',
+     keys:'守備：1stDFのスイッチ／2nd・3rdの役割／マーク、スペース、コース／前線の限定／スライド（横ずれ）／GKとの連携／コンパクト\n攻撃：優先順位（シュート、仕掛ける、背後）／ひとりでの突破とコンビネーション（ワンツー、3人目）／幅と深さ\n連続した攻守の切りかえ',
+     notes:'シュートをねらわずに、簡単にバックパスを選ぶ時は、止めて優先順位を確かめる\nGKをふくめて、ラインを下げすぎない'},
+    {id:'p10-n12',src:a6,ages:U,name:'ランニング・リフティング・ヘディング（2人1組）',cats:['wup'],themes:['ボールフィーリング','ヘディング'],minP:2,size:'フリー',equip:['ボール'],
+     method:'2人1組で行う\nリフティング：相手に出したら、受け手をこえて移動する\nヘディング：1人2分。種類は自由',
+     keys:'動きながら観る\nコミュニケーション\n主体性（自分の課題に取り組む）'},
+    {id:'p10-n13',src:a6,ages:U,name:'パス＆コントロール（小さなひし形・5人1組）',cats:['wup','tr1'],themes:['パス＆コントロール'],minP:5,maxP:5,size:'8m×8mのひし形',equip:['ボール','コーン'],opIds:['p4-a1'],
+     method:'5人1組。パスを出したら移動する\nコントロールのしかたを変える：縦へ、カットイン、セット（落とし）から3人目',
+     keys:'観る、ステップワーク、体の向き\n攻撃方向を意識したファーストタッチ\n動きながらのパス＆コントロール、パススピード\n動き出すタイミングと角度',notes:'せまい形で行うので、パススピードとコントロールの質がはっきり出る'},
+    {id:'p10-n14',src:a6,ages:U,name:'3対3＋2サーバー（15m四方・サーバーは1タッチ）',cats:['tr2'],themes:['ポゼッション','攻→守'],minP:8,maxP:8,size:'15m×15m',equip:['ボール','マーカー','ビブス'],opIds:['p5-u2'],
+     method:'サーバーは1タッチ\nアウトオブプレーは、コーチの配球から',
+     keys:'幅と深さ、優先順位\n1stDFのスイッチ。2nd・3rdの役割\nマーク、スペース、コース\n連続した攻守の切りかえ'},
+    {id:'p10-n15',src:a6,ages:U,name:'8対8＋2GK（3-3-2）',cats:['game'],themes:['ゴールを奪う（シュート）','ボールを奪う'],minP:18,maxP:18,gk:true,size:'少年用コート（68m×50m）',equip:['ボール','ゴール','マーカー','ビブス'],
+     method:'3-3-2の形でマッチアップする\n別のやり方：守備は3-3-2、攻撃は2-1-4-1',
+     keys:'連続した攻守の切りかえ\n高いインテンシティ\n観て、判断してプレーする\n優先順位（シュート、仕掛ける、背後をねらう）\nコンビネーション。ラストパスのスピードと精度'},
+    {id:'p10-n16',src:a8,ages:U,name:'パス＆コントロール（3人・まん中でターン）',cats:['wup'],themes:['パス＆コントロール'],minP:3,maxP:3,size:'25m',equip:['ボール','マーカー'],
+     method:'3人で行う\n①から②へパス\n②はファーストタッチでターンして、③へパス\n③はドリブルで中央まで行き、①へパス\nパス交換や1つ飛ばしなど、自由に出していく',
+     keys:'パススピード\n動き出しのタイミング\nプレーのアイデア',notes:'顔を上げて状況をつかむこと、ファーストタッチを大切にする'},
+    {id:'p10-n17',src:a8,ages:U,name:'1対1（左右のコーンゲートを突破）',cats:['tr1'],themes:['1対1の守備','ボールを運ぶ（ドリブル）'],minP:2,size:'13m×12m（ゲートの幅4m）',equip:['ボール','コーン'],opIds:['p8-d8'],
+     method:'守備（DF）から攻撃（OF）へパスしてスタート\n攻撃は、左右どちらかのコーンゲートを突破する\n守備は奪ったら、次の攻撃の選手へパスする',
+     keys:'ボールを奪う（体を当てる）\n攻撃との間合い\nファーストタッチでのかけひき\n突破（守備を抜く、ブロックしながら）',notes:'ステップワークと、体を当てに行くことを求める'},
+    {id:'p10-n18',src:a8,ages:U,name:'2対2（左右のコーンゲートを突破）',cats:['tr2'],themes:['チャレンジ＆カバー','コンビネーション'],minP:4,size:'13m×12m（ゲートの幅4m）',equip:['ボール','コーン'],opIds:['p10-n17'],
+     method:'守備から攻撃へパスしてスタート\n攻撃は、左右どちらかのコーンゲートを突破する\n守備は奪ったら、次の攻撃の選手へパスする',
+     keys:'マークの原則\n攻守の優先順位\nチャレンジ＆カバー\nコンビネーション\nタイミング\n突破（ドリブル、パス）\nかけひき',notes:'チャレンジ＆カバーの関係と、ポジションの取り直しを伝えると、インターセプトやカバーの回数がふえる'},
+    {id:'p10-n19',src:a9,ages:U,name:'6対6 ラインゴール（4-2の2ライン）',cats:['tr2'],themes:['ボールを奪う','チャレンジ＆カバー'],minP:12,maxP:14,size:'30m×50m',equip:['ボール','コーン','マーカー','ビブス'],opIds:['p9-m11'],
+     method:'4-2の2ラインで守る\nラインゴール\n段階：サーバーなし → サーバーだけ → サーバー＋ターゲット',
+     keys:'アプローチの強さとタイミング\nマークの原則。マークとコースを意識する\nプレスバック\n連続した攻守の切りかえ'},
+    {id:'p10-n20',src:b1,ages:U,name:'1対1 → 2対2＋サーバー（セットのパスから・ラインゴール）',cats:['tr1'],themes:['1対1の守備','チャレンジ＆カバー'],minP:5,size:'1対1は10m×15m、2対2は15m×25m（縦長）',equip:['ボール','マーカー','ビブス'],opIds:['p9-m12'],
+     method:'セット（落とし）のパスからスタート\n攻撃の選手は、サーバーに落としたあと、動いてパスを受ける。サーバーはワンタッチ\nパスをした守備の選手は、そのままアプローチする\nもう1人の攻撃・守備の選手は、クサビのパスが入ったら中へ入る\n攻撃は、ライン突破をねらう。守備は奪ったら、逆のラインへ攻める',
+     keys:'ボールが動いている間にアプローチ\n優先順位を持ってチャレンジ\n間合い、ステップワーク。片方を切りすぎずに対応する\nチャレンジ＆カバーの連続\n攻守の切りかえ、球ぎわの強さ',notes:'「抜かれない」ではなく、「ボールを奪う」ことを求める'},
+    {id:'p10-n21',src:b1,ages:U,name:'3対3＋フリーマン＋ターゲット（ラインゴール・横長）',cats:['tr2'],themes:['ボールを奪う','チャレンジ＆カバー'],minP:10,size:'20m×35m（横長）',equip:['ボール','コーン','マーカー','ビブス'],opIds:['p10-n2'],
+     method:'コーチの配球でスタート。ラインゴール\n自陣のフリーマンはサポート役、前のフリーマンはターゲット役\nフリーマンはワンタッチ',
+     keys:'ポジショニングと、チャレンジの優先順位\nマーク、コース、スペースを同時に意識する\nチャレンジ＆カバーの連続\n攻守の切りかえと、相手とのかけひき、間合い\nコーチングと、グループで奪う意識'},
+    {id:'p10-n22',src:b2,ages:U,name:'3対3＋3サーバー＋1対1（ラインを突破して2人移動）',cats:['tr1'],themes:['コンビネーション','ビルドアップ'],minP:11,maxP:11,size:'30m（15m×2）×18m',equip:['ボール','マーカー','ビブス'],opIds:['p5-w10'],
+     method:'片方のエリアで3対3、もう片方で1対1に分かれる\nまん中のラインを突破したら、攻守2人ずつが移動する\n突破したら、サーバーに当てて攻撃方向が変わる\nサーバーは2タッチまで。サーバーからサーバーへのパスもあり',
+     keys:'優先順位（仕掛ける、背後をねらう）\n動きながら観て、かけひき\n動きながらのパス＆コントロール\nサポートの距離と角度。幅と深さ\nドリブルでの仕掛け\nスクリーン＆ターン（ボールを失わない）\n守備のインテンシティと、攻守の切りかえ'},
+    {id:'p10-n23',src:b3,ages:U,name:'パス＆コントロール（コーン6本・クロスする形）',cats:['wup'],themes:['パス＆コントロール','コンビネーション'],minP:6,size:'28m×12m',equip:['ボール','コーン'],
+     method:'コーン6本を置き、ボール2個で同時に行う\n① 2タッチ\n② 3人目の動きを入れる\n③ コンビネーション',
+     keys:'パススピード\nファーストタッチ\n出し手と受け手のタイミング\nどちらの足にパスをするか',notes:'ファーストタッチで相手をはがすイメージを持たせる'},
+    {id:'p10-n24',src:b3,ages:U,name:'1対1＋GK → 2対2＋GK（配球役も攻撃に参加）',cats:['tr1'],themes:['ゴール前の攻防','ゴールを守る'],gk:true,size:'25m×40m（ペナルティエリアのまわり）',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p8-d5'],
+     method:'① 配球役からパスを受けて、1対1がスタート\n② 配球役も攻撃に参加し、守備も1人ふやして2対2',
+     keys:'アプローチの距離と角度\n攻守の優先順位\nGKとの連携\n体を当てる\nチャレンジ＆カバーの関係\nコンビネーション',notes:'ここでの優先順位は「ボールを奪う」ではなく「ゴールを守る」\n1対1では、外へ押し出して、ゴールへの角度をなくしていく'},
+    {id:'p10-n25',src:b4,ages:U,name:'6対6＋2GK（3-1-2の3ライン）',cats:['tr2'],themes:['ゴールを奪う（シュート）','コンビネーション'],minP:14,maxP:14,gk:true,size:'55m×50m',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p5-w7'],
+     method:'3-1-2の3ラインで行う\nコーチの配球でスタート',
+     keys:'優先順位（シュート、仕掛ける、背後をねらう）\nサポートの角度、距離、タイミング\nコンビネーション\n連続した攻守の切りかえ\nボールを追いこす動き',notes:'マークの背後を取る動き出しと、縦パスに対するサポートを確かめる'},
+    {id:'p10-n26',src:b5,ages:U,name:'パス＆コントロール（ひし形・シンプル／ワンツー／3人目／フリック）',cats:['wup'],themes:['パス＆コントロール','コンビネーション'],minutes:15,size:'22m×16mのひし形',equip:['ボール','コーン'],opIds:['p5-c6'],
+     method:'ひし形で、パスを出したら移動する\n① シンプル　② ワンツー　③ 3人目　④ フリック',
+     keys:'観る\n止める、蹴る\nパススピード\n動き出すタイミング\n体の向きと、遠い方の足を意識する\nポジションのイメージ',notes:'ファーストタッチを大切にし、次のプレーにつながるようにイメージさせる'},
+    {id:'p10-n27',src:b5,ages:U,name:'4対4 ラインゴール（2球目は後ろのサーバーから）',cats:['tr1'],themes:['ボールを奪う','チャレンジ＆カバー'],minP:10,maxP:10,minutes:15,size:'30m×40m',equip:['ボール','コーン','マーカー','ビブス'],opIds:['p9-w10'],
+     method:'コーチの配球でスタート\nサーバーに当てて、ラインを突破する\n2球目は、守備がセットしたあと、後ろのサーバーから配球する（サーバーのサポートはなし）',
+     keys:'ポジショニングと、チャレンジの優先順位\n前線の限定\nスライド（横ずれ）\nチャレンジ＆カバー',notes:'2ラインでのボールの奪い方と、ポジションの取り方を共有する\n逆サイドにいる選手のポジションを確かめる'}
+  ];
+  const dia=(cx,cy,w,h)=>[L('line',cx,cy-h,cx+w,cy),L('line',cx+w,cy,cx,cy+h),L('line',cx,cy+h,cx-w,cy),L('line',cx-w,cy,cx,cy-h)];
+  const figs={
+    'p10-n1':[{field:'blank',items:[...dia(500,330,330,270),L('line',335,195,665,465),L('line',665,195,335,465),P('w',500,130,180),P('w',700,330,270),P('w',500,530,0),P('w',300,330,90),I('ball',526,146),P('b',460,220,180),P('b',600,300,270),P('b',400,400,90),P('F',540,420,0),P('F',400,290,90),P('F',600,380,270),
+      L('pass',516,150,690,316),L('pass',684,344,516,516),T('18m×14m',850,120),T('3グループ同時。ワンツー・フリック・1つ飛ばし・落とし',500,640)]}],
+    'p10-n2':[{field:'blank',items:[...box(220,130,780,570),P('S',500,96,180),I('ball',526,112),P('S',500,604,0),P('C',860,350,270),P('b',300,200,135),P('b',700,260,270),P('b',460,440,0),P('w',400,360,0),P('w',620,380,0),P('w',540,450,0),L('pass',490,112,316,196),L('run',400,340,340,240),
+      T('25m×30m',120,350),T('リターンなし → 1回あり → あり',500,40),T('サーバーとターゲットは1タッチ',500,660)]}],
+    'p10-n3':[{field:'goal',items:[G(500,125),L('line',150,400,850,400),I('ball',526,150),P('b',180,360,90),P('b',400,290,180),P('b',680,290,180),P('w',300,370,0),P('w',430,330,0),P('w',560,340,0),P('b',400,460,180),P('b',560,460,180),P('b',700,500,180),P('w',340,530,0),P('w',480,530,0),P('w',620,530,0),P('G',500,640,0),
+      T('3-3でマッチアップ',160,200),T('52.5m×40〜44m',840,200)]}],
+    'p10-n4':[{field:'full',items:[GL,GR,I('ball',878,362),P('b',380,250,90),P('b',380,450,90),P('b',540,180,90),P('b',540,350,90),P('b',540,520,90),P('b',700,280,90),P('b',700,420,90),P('w',760,250,270),P('w',760,450,270),P('w',600,180,270),P('w',600,350,270),P('w',600,520,270),P('w',440,300,270),P('w',440,410,270),T('2-3-2',500,30),T('72m×55〜60m',500,676)]}],
+    'p10-n5':[{field:'blank',items:[I('cone',340,150),I('cone',660,150),I('cone',820,350),I('cone',660,550),I('cone',340,550),I('cone',180,350),P('w',310,110,135),P('w',690,110,225),P('w',870,350,270),P('w',690,590,315),P('w',310,590,45),P('w',130,350,90),I('ball',336,576),I('ball',664,576),
+      L('pass',300,570,140,372),L('pass',136,330,300,130),L('pass',320,574,680,130,420,350),L('pass',700,570,860,372),L('pass',864,330,700,130),T('1辺15m',500,350),T('① 8の字　② 落として奥へ、ワンツー',500,660)]}],
+    'p10-n6':[{field:'blank',items:[...box(160,140,840,560),P('S',120,350,90),P('S',880,350,270),P('C',500,620,0),I('ball',526,608),P('b',260,220,90),P('b',280,480,90),P('b',460,330,90),P('b',420,520,90),P('w',400,230,270),P('w',560,400,270),P('w',700,280,270),P('w',680,500,270),L('pass',494,602,430,534),L('drib',470,330,820,300),
+      T('40m×30m',500,100),T('後ろのサーバーは2タッチ以下、前のターゲットは1タッチ',500,664)]}],
+    'p10-n7':[{field:'full',items:[L('line',700,60,700,640),GL,I('ball',122,362),P('b',220,200,90),P('b',200,350,90),P('b',220,500,90),P('b',340,350,90),P('b',480,260,90),P('b',480,440,90),P('w',380,250,270),P('w',400,440,270),P('w',560,200,270),P('w',560,350,270),P('w',560,500,270),P('w',660,350,270),
+      L('drib',490,260,690,230),T('このラインを通過で得点',800,30),T('相手は奪ったらシュートへ',500,640),T('50m×50m',500,676)]}],
+    'p10-n8':[{field:'goal',items:[G(500,125),I('cone',340,560),I('cone',500,480),I('cone',660,560),P('w',500,400,0),I('ball',526,388),P('w',560,500,315),P('w',500,640,0),P('w',300,580,45),L('pass',506,410,552,486),L('pass',552,514,510,624),L('pass',486,634,316,590),L('drib',300,560,330,420),L('pass',334,406,462,112),
+      T('①',460,400),T('②',610,500),T('③',560,650),T('④',240,580),T('①→②→③→④の順にパスして④がシュート',500,30)]}],
+    'p10-n9':[{field:'full',items:[GL,GR,P('C',500,28,180),I('ball',530,34),L('pass',494,44,420,330),P('w',260,220,90),P('w',260,480,90),P('w',400,350,90),P('w',340,300,90),P('b',740,220,270),P('b',740,480,270),P('b',600,300,270),P('b',600,420,270),T('2点先取',500,640),T('40m×44m',500,676)]}],
+    'p10-n10':[{field:'goal',items:[G(500,125),I('cone',460,330),I('cone',540,330),P('w',430,340,0),P('w',570,340,0),I('cone',420,520),I('cone',580,520),P('w',380,540,0),P('w',620,540,0),P('b',500,620,0),I('ball',526,608),L('pass',510,604,612,552),L('pass',616,520,440,352),L('run',430,320,400,230,360,300),L('pass',424,330,470,112),
+      T('16m',300,430),T('6m',500,290),T('8m',500,560),T('2トップのどちらに出してもよい',500,670)]}],
+    'p10-n11':[{field:'goal',items:[G(500,125),L('line',150,400,850,400),I('ball',526,150),P('b',180,360,90),P('b',420,290,180),P('b',680,290,180),P('w',340,360,0),P('w',540,350,0),P('b',420,460,180),P('b',580,460,180),P('w',320,530,0),P('w',480,540,0),P('w',640,530,0),P('G',500,640,0),T('3-2の2ライン',160,200),T('50m×40m',840,200)]}],
+    'p10-n12':[{field:'blank',items:[P('w',300,330,90),I('ball',326,344),P('w',560,330,270),L('pass',336,340,540,336),L('run',310,310,700,300,500,180),T('リフティング：出したら受け手をこえて移動',500,480),T('ヘディング：1人2分、種類は自由',500,550)]}],
+    'p10-n13':[{field:'blank',items:[I('cone',500,180),I('cone',300,350),I('cone',700,350),I('cone',500,520),P('w',500,130,180),P('w',540,110,180),I('ball',474,150),P('w',250,350,90),P('w',750,350,270),P('w',500,570,0),L('pass',480,156,270,336),L('pass',270,368,484,560),L('pass',516,560,736,366),L('run',500,150,300,300),
+      T('8m×8m',500,350),T('縦へ・カットイン・セットから3人目',500,650)]}],
+    'p10-n14':[{field:'blank',items:[...box(260,130,740,570),P('S',500,96,180),I('ball',474,112),P('S',500,604,0),P('F',200,350,90),P('F',800,350,270),P('b',340,220,135),P('b',680,300,270),P('b',460,440,0),P('w',420,340,0),P('w',600,380,0),P('w',520,450,0),L('pass',480,116,352,210),
+      T('15m×15m',860,130),T('サーバーは1タッチ',500,40)]}],
+    'p10-n15':[{field:'full',items:[GL,GR,P('b',230,200,90),P('b',210,350,90),P('b',230,500,90),P('b',380,220,90),P('b',380,350,90),P('b',380,480,90),P('b',520,290,90),P('b',520,420,90),I('ball',236,512),
+      P('w',770,200,270),P('w',790,350,270),P('w',770,500,270),P('w',620,220,270),P('w',620,350,270),P('w',620,480,270),P('w',470,250,270),P('w',470,460,270),T('3-3-2',500,30),T('68m×50m',500,676)]}],
+    'p10-n16':[{field:'blank',items:[P('w',160,350,90),I('ball',186,364),P('w',500,300,180),P('w',840,350,270),L('pass',180,340,484,300),L('pass',516,300,824,344),L('drib',820,372,520,400),L('pass',500,404,180,372),T('①',160,290),T('②',500,240),T('③',840,290),T('25m',500,500),T('②はファーストタッチでターン。③は中央までドリブル',500,580)]}],
+    'p10-n17':[{field:'blank',items:[I('cone',260,180),I('cone',260,300),I('cone',740,180),I('cone',740,300),I('cone',440,540),I('cone',560,540),P('w',500,160,180),P('b',500,580,0),I('ball',526,568),L('pass',494,562,494,184),L('run',506,562,506,300),L('drib',516,170,720,240),
+      T('13m×12m',500,90),T('ゲート4m',860,240),T('ゲート4m',140,240),T('DFからOFへパスしてスタート',500,650)]}],
+    'p10-n18':[{field:'blank',items:[I('cone',260,180),I('cone',260,300),I('cone',740,180),I('cone',740,300),I('cone',400,540),I('cone',600,540),P('w',420,160,180),P('w',620,160,180),P('b',440,580,0),P('b',560,580,0),I('ball',466,568),L('pass',440,560,422,184),L('run',452,562,440,300),L('run',560,560,580,330),L('pass',436,160,604,160),
+      T('13m×12m',500,90),T('2対2。守備は奪ったら次の攻撃へパス',500,650)]}],
+    'p10-n19':[{field:'blank',items:[...box(160,130,840,560),I('cone',430,130),I('cone',570,130),I('cone',430,560),I('cone',570,560),P('S',500,96,180),P('S',500,594,0),P('w',400,180,180),I('ball',426,196),P('w',620,170,180),P('w',200,230,135),P('w',820,230,225),P('w',380,330,180),P('w',600,350,180),
+      P('b',440,260,0),P('b',600,260,0),P('b',240,400,0),P('b',400,440,0),P('b',580,440,0),P('b',740,420,0),T('30m×50m',880,90),T('4-2の2ライン。サーバーなし → サーバー → ＋ターゲット',500,650)]}],
+    'p10-n20':[{field:'blank',items:[...box(200,190,800,510),P('S',840,350,270),P('b',240,230,90),I('ball',266,244),P('w',420,300,270),P('w',240,460,90),P('b',700,440,270),L('pass',260,236,404,296),L('pass',420,320,820,350),L('run',400,310,480,420),L('run',256,240,400,280),L('pass',830,370,490,430),
+      T('15m×25m（1対1は10m×15m）',500,140),T('落として動き直す。サーバーはワンタッチ',500,570),T('奪ったら逆のラインへ',500,630)]}],
+    'p10-n21':[{field:'blank',items:[...box(140,180,860,520),I('cone',440,180),I('cone',560,180),I('cone',440,520),I('cone',560,520),P('F',500,150,180),P('F',500,550,0),P('C',80,350,90),I('ball',106,364),P('w',300,280,180),P('w',500,280,180),P('w',700,280,180),P('b',260,420,0),P('b',520,440,0),P('b',740,420,0),
+      T('20m×35m（横長）',500,100),T('自陣のFはサポート、前のFはターゲット。Fはワンタッチ',500,620)]}],
+    'p10-n22':[{field:'blank',items:[...box(180,170,820,530),L('line',500,170,500,530),P('S',140,350,90),P('S',860,350,270),P('S',500,570,0),P('w',260,230,90),P('w',280,470,90),P('w',420,350,90),I('ball',306,482),P('b',340,260,270),P('b',360,440,270),P('b',460,300,270),P('w',680,250,270),P('b',660,400,270),
+      L('pass',300,460,410,358),L('pass',436,340,664,256),T('3対3',340,130),T('1対1',660,130),T('突破したら攻守2人ずつ移動 → サーバーに当てて逆へ',500,640)]}],
+    'p10-n23':[{field:'blank',items:[I('cone',320,170),I('cone',680,170),I('cone',180,350),I('cone',820,350),I('cone',320,530),I('cone',680,530),P('w',290,130,135),P('w',710,130,225),P('w',130,350,90),P('w',870,350,270),P('w',290,570,45),P('w',710,570,315),I('ball',156,364),I('ball',844,336),
+      L('pass',280,150,150,330),L('pass',150,372,280,550),L('pass',310,556,690,146),L('pass',720,150,850,330),L('pass',850,372,720,550),L('pass',690,556,310,146),T('28m×12m',500,90),T('① 2タッチ　② 3人目　③ コンビネーション',500,650)]}],
+    'p10-n24':[{field:'goal',items:[G(500,125),P('S',400,600,0),I('ball',426,588),P('w',220,520,45),P('b',380,440,180),L('pass',390,592,236,528),L('drib',226,500,340,300),P('S',640,600,0),P('w',820,520,315),P('b',620,430,180),P('b',720,430,180),L('pass',650,590,806,526),L('run',646,580,600,330),
+      T('① 1対1＋GK',200,640),T('② 配球役も参加して2対2',780,640)]}],
+    'p10-n25':[{field:'full',items:[GL,GR,P('C',500,28,180),I('ball',530,34),P('b',230,200,90),P('b',210,350,90),P('b',230,500,90),P('b',360,350,90),P('b',500,270,90),P('b',500,440,90),P('w',770,200,270),P('w',790,350,270),P('w',770,500,270),P('w',640,350,270),P('w',440,250,270),P('w',440,460,270),T('3-1-2の3ライン',500,640),T('55m×50m',500,676)]}],
+    'p10-n26':[{field:'blank',items:[I('cone',500,150),I('cone',300,350),I('cone',700,350),I('cone',500,550),P('w',500,100,180),P('w',250,350,90),P('w',750,350,270),P('w',500,600,0),P('w',540,630,0),I('ball',474,588),L('pass',510,584,740,366),L('pass',740,334,516,116),L('pass',484,116,260,334),L('pass',260,366,484,584),
+      T('22m×16m',860,150),T('シンプル・ワンツー・3人目・フリック',500,670)]}],
+    'p10-n27':[{field:'blank',items:[...box(200,130,800,560),I('cone',440,130),I('cone',560,130),I('cone',440,560),I('cone',560,560),P('S',500,100,180),P('S',500,590,0),P('C',120,350,90),I('ball',146,364),P('w',400,200,180),P('w',720,260,180),P('w',260,380,180),P('w',520,400,180),P('b',520,300,0),P('b',300,470,0),P('b',480,500,0),P('b',700,480,0),
+      L('pass',152,360,250,380),T('30m×40m',880,90),T('サーバーに当ててライン突破',500,40),T('2球目は後ろのサーバーから',500,650)]}]
+  };
+  const tp=(id,title,theme,age,slots)=>({id,title,theme,age,template:true,slots:slots.map(([cat,cardId])=>({cat,cardId}))});
+  const plans=[
+    tp('seed-plan-mie-d','守備の原理原則・三重（お手本）','ボールを奪う','U-15',[['wup','p10-n1'],['tr1','p10-n2'],['tr2','p10-n3'],['game','p10-n4']]),
+    tp('seed-plan-mie-b','ビルドアップ・三重（お手本）','ビルドアップ','U-15',[['wup','p10-n5'],['tr1','p10-n6'],['tr2','p10-n7'],['game','p10-n4']]),
+    tp('seed-plan-mie-m','中盤の攻防・三重（お手本）','1対1の守備','U-15',[['wup','p10-n16'],['tr1','p10-n17'],['tr2','p10-n18'],['game','p9-m6']])
+  ];
+  return {cards,figs,plans};
+}
+
 /* ========== お手本カード ========== */
 function seedData(){
   const src={type:'jfa',title:'JFA 2016 U-12NTC 04 実技④ ゴールを奪う',url:'https://www.jfa.jp/youth_development/national_tracen/pdf/ntc_u12_menu_04.pdf'};
@@ -2204,8 +2366,8 @@ function seedData(){
     'seed-ntc04-5':[{field:'goal',items:[P('G',500,125,180),P('w',330,490,150),P('w',500,455,180),P('w',670,490,210),P('b',350,425,180),P('b',500,390,180),P('b',650,425,180),P('S',500,610,0),I('ball',535,600),L('pass',486,596,344,510),T('25m×29m',820,660)]}],
     'seed-ntc04-6':[{field:'full',items:[P('G',95,350,90),P('G',905,350,270),P('w',260,220,90),P('w',260,480,90),P('w',400,300,90),P('w',430,430,90),P('b',740,220,270),P('b',740,480,270),P('b',600,280,270),P('b',580,430,270),P('F',500,350,90),I('ball',455,416),T('45m×29m',500,672)]}]
   };
-  const pk=packData(P,I,T,L),pk3=pack3Data(P,I,T,L),pk4=pack4Data(P,I,T,L),pk5=pack5Data(P,I,T,L),pk6=pack6Data(P,I,T,L),pk7=pack7Data(P,I,T,L),pk8=pack8Data(P,I,T,L),pk9=pack9Data(P,I,T,L);
-  c.push(...pk.cards,...pk3.cards,...pk4.cards,...pk5.cards,...pk6.cards,...pk7.cards,...pk8.cards,...pk9.cards);Object.assign(figs,pk.figs,pk3.figs,pk4.figs,pk5.figs,pk6.figs,pk7.figs,pk8.figs,pk9.figs);pk.plans.push(...pk3.plans,...pk4.plans,...pk5.plans,...pk6.plans,...pk7.plans,...pk8.plans,...pk9.plans);
+  const pk=packData(P,I,T,L),pk3=pack3Data(P,I,T,L),pk4=pack4Data(P,I,T,L),pk5=pack5Data(P,I,T,L),pk6=pack6Data(P,I,T,L),pk7=pack7Data(P,I,T,L),pk8=pack8Data(P,I,T,L),pk9=pack9Data(P,I,T,L),pk10=pack10Data(P,I,T,L);
+  c.push(...pk.cards,...pk3.cards,...pk4.cards,...pk5.cards,...pk6.cards,...pk7.cards,...pk8.cards,...pk9.cards,...pk10.cards);Object.assign(figs,pk.figs,pk3.figs,pk4.figs,pk5.figs,pk6.figs,pk7.figs,pk8.figs,pk9.figs,pk10.figs);pk.plans.push(...pk3.plans,...pk4.plans,...pk5.plans,...pk6.plans,...pk7.plans,...pk8.plans,...pk9.plans,...pk10.plans);
   const cards=c.map(x=>normCard({...base,...x,images:(figs[x.id]||[]).map(board=>({board}))}));
   const packPlans=pk.plans.map(normPlan);
   const p=normPlan({id:'seed-plan-ntc04',title:'ゴールを奪う（お手本）',theme:th[0],age:'U-12',template:true,
@@ -2221,6 +2383,12 @@ async function upgradeSeedFigs(){
 // 図のなかったころのお手本カードに、図を足す（自分で図を入れたカードはさわらない）
 async function addSeedFigs(){
   for(const s of seedData().cards){const c=card(s.id);if(c&&!c.images.length&&s.images.length){c.images=s.images;await dbPut('cards',c);}}
+}
+// はじめから入っているひな型が書きかえられていたら、元の中身にもどす
+async function restoreSeedPlans(){
+  const sig=p=>JSON.stringify([p.title,p.theme,p.age,p.players,p.totalMin,p.review,p.slots.map(s=>[s.cat,s.cardId,s.minutes,s.memo])]);
+  for(const sp of seedData().plans){const p=plan(sp.id);
+    if(p&&p.template&&sig(p)!==sig(sp)){Object.assign(p,{title:sp.title,theme:sp.theme,age:sp.age,players:sp.players,totalMin:sp.totalMin,review:'',done:false,slots:sp.slots});await dbPut('plans',p);}}
 }
 async function putSeed(){
   const sd=seedData();
@@ -2636,7 +2804,7 @@ function vPlans(){
   const ts=S.plans.filter(p=>p.template);
   return `<div class="bar"><button class="btn pri" data-act="newPlan">＋ 今日のトレーニングを作る</button></div>
   <h3>計画</h3>${ps.length?ps.map(row).join(''):'<div class="empty">計画はまだありません。</div>'}
-  <h3>ひな型</h3>${ts.length?ts.map(row).join(''):'<p class="meta">計画を「ひな型にする」と、ここに並びます。</p>'}`;
+  <h3>ひな型</h3><p class="meta">ひな型は書きかえられません。開いて「コピーして計画を作る」を押すと、編集できる計画になります。</p>${ts.length?ts.map(row).join(''):'<p class="meta">計画を「ひな型にする」と、ここに並びます。</p>'}`;
 }
 function slotLabel(p,s){const same=p.slots.filter(x=>x.cat===s.cat);return catLabel(s.cat)+(same.length>1?` ${same.indexOf(s)+1}`:'');}
 function totalHTML(p){
@@ -2647,9 +2815,9 @@ function totalHTML(p){
 }
 function vPlan(id){
   const p=plan(id);if(!p)return `<div class="empty">計画が見つかりません。</div><button class="btn" data-act="back">もどる</button>`;
+  if(p.template)return vTemplate(p);
   return `<div class="bar"><button class="btn ghost" data-act="back">‹ もどる</button><span class="grow"></span>
     <button class="btn sm" data-act="planPrint" data-mode="list">印刷（一覧版）</button><button class="btn sm" data-act="planPrint" data-mode="detail">印刷（詳細版）</button></div>
-  ${p.template?'<p class="meta">これは「ひな型」です。下の「この型で計画を作る」から使えます。</p>':''}
   <div class="panel"><div class="grid2">
     <label class="f"><span>日付</span><input type="date" data-pf="date" value="${esc(p.date)}"></label>
     <label class="f"><span>タイトル</span><input type="text" data-pf="title" value="${esc(p.title)}" placeholder="${esc(planTitle({...p,title:''}))}"></label>
@@ -2673,7 +2841,24 @@ function vPlan(id){
   <div class="panel">${p.template?'':`<label class="chip" style="margin-bottom:10px"><input type="checkbox" data-pf="done"${p.done?' checked':''}><span>この練習を実施した</span></label>
     <p class="hint" style="margin:0 0 10px">チェックすると、各メニューに「できばえ」を付けられます。記録はカードに残り、次の「おまかせ」に活かされます。</p>`}
     <label class="f" style="margin:0"><span>ふりかえり（実施後の記録）</span><textarea data-pf="review" placeholder="うまくいったこと、次回なおすこと">${esc(p.review)}</textarea></label></div>
-  <div class="bar"><button class="btn" data-act="planDup">${p.template?'この型で計画を作る':'複製する'}</button><button class="btn" data-act="planTpl">${p.template?'ひな型をやめる':'ひな型にする'}</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`;
+  <div class="bar"><button class="btn" data-act="planDup">複製する</button><button class="btn" data-act="planTpl">ひな型にする</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`;
+}
+// ひな型は書きかえられない。変えたい時は、コピーして計画にしてから編集する
+const builtinPlan=p=>String(p.id).startsWith('seed-plan');
+function vTemplate(p){
+  const info=[p.theme?`テーマ：${p.theme}`:'',p.age?`対象：${p.age}`:'',p.players!=null?`${p.players}人`:'',p.totalMin!=null?`予定 ${p.totalMin}分`:''].filter(Boolean).join('　');
+  return `<div class="bar"><button class="btn ghost" data-act="back">‹ もどる</button><span class="grow"></span>
+    <button class="btn sm" data-act="planPrint" data-mode="list">印刷（一覧版）</button><button class="btn sm" data-act="planPrint" data-mode="detail">印刷（詳細版）</button></div>
+  <h2 style="margin:6px 0">${esc(planTitle(p))}</h2>
+  <p class="meta">${esc(info)}</p>
+  <div class="panel"><p style="margin:0 0 10px"><b>これは「ひな型」です。</b>ひな型は書きかえられません。使う時や、中身を変えたい時は、コピーして計画にしてから編集します。</p>
+    <button class="btn pri" data-act="planDup">コピーして計画を作る</button></div>
+  <h3>メニュー</h3>
+  ${p.slots.map(s=>{const c=card(s.cardId);return `<div class="slot s-${s.cat}"><div class="slot-h"><span class="name">${esc(slotLabel(p,s))}</span><span class="grow"></span>${slotMin(s)!=null?`<span class="meta">${slotMin(s)}分</span>`:''}</div>
+    ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div></div>`:'<p class="meta">カードは入っていません</p>'}
+    ${s.memo?`<p class="meta">メモ：${esc(s.memo)}</p>`:''}</div>`;}).join('')}
+  ${builtinPlan(p)?'<p class="hint">はじめから入っているひな型は、消したり、ひな型をやめたりできません。</p>'
+    :`<div class="bar"><button class="btn" data-act="planTpl">ひな型をやめる（計画にもどして編集する）</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`}`;
 }
 const curPlan=()=>plan(view().id);
 const slotOf=el=>{const p=curPlan(),sid=el.closest('[data-sid]').dataset.sid;return p.slots.find(s=>s.id===sid);};
@@ -2864,8 +3049,8 @@ const ACT={
   planPrint:el=>printPlan(curPlan(),el.dataset.mode),
   planDup:()=>{const p=curPlan(),n=normPlan({...p,id:uid(),date:today(),title:p.template?'':p.title&&p.title+'（コピー）',template:false,review:'',slots:p.slots.map(s=>({...s,id:uid()})),created:Date.now()});
     S.plans.push(n);savePlan(n);stack.pop();go({name:'plan',id:n.id});toast('計画を作りました');},
-  planTpl:()=>{const p=curPlan();p.template=!p.template;savePlan(p);render();toast(p.template?'ひな型にしました':'ふつうの計画にもどしました');},
-  planDel:()=>{const p=curPlan();if(!confirm(`「${planTitle(p)}」を削除しますか？`))return;S.plans=S.plans.filter(x=>x!==p);dbDel('plans',p.id);back();toast('削除しました');},
+  planTpl:()=>{const p=curPlan();if(p.template&&builtinPlan(p))return;if(!p.template&&!confirm('ひな型にすると、書きかえられなくなります。ひな型にしますか？'))return;p.template=!p.template;savePlan(p);render();toast(p.template?'ひな型にしました':'ふつうの計画にもどしました');},
+  planDel:()=>{const p=curPlan();if(p.template&&builtinPlan(p))return;if(!confirm(`「${planTitle(p)}」を削除しますか？`))return;S.plans=S.plans.filter(x=>x!==p);dbDel('plans',p.id);back();toast('削除しました');},
   slotAdd:el=>{const p=curPlan();p.slots.push({id:uid(),cat:el.dataset.cat,cardId:null,minutes:null,memo:''});savePlan(p);render();},
   slotDel:el=>{const p=curPlan(),s=slotOf(el);if(card(s.cardId)&&!confirm('この枠を消しますか？'))return;p.slots=p.slots.filter(x=>x!==s);savePlan(p);render();},
   slotUp:el=>{const p=curPlan(),i=p.slots.indexOf(slotOf(el));if(i>0){[p.slots[i-1],p.slots[i]]=[p.slots[i],p.slots[i-1]];savePlan(p);render();}},
@@ -2921,9 +3106,10 @@ window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
     else{
       if(!get('seedfig'))await addSeedFigs();
       if(!get('seedfig2'))await upgradeSeedFigs();
-      if(!get('pack2')||!get('pack3')||!get('pack4')||!get('pack5')||!get('pack6')||!get('pack7')||!get('pack8')||!get('pack9'))await putSeed(); // 追加の練習集を、集ごとに1回だけ入れる。そのあと消したカードは復活させない
+      if(!get('pack2')||!get('pack3')||!get('pack4')||!get('pack5')||!get('pack6')||!get('pack7')||!get('pack8')||!get('pack9')||!get('pack10'))await putSeed(); // 追加の練習集を、集ごとに1回だけ入れる。そのあと消したカードは復活させない
     }
-    for(const k of ['seedfig','seedfig2','pack2','pack3','pack4','pack5','pack6','pack7','pack8','pack9']){if(!get(k))await dbPut('meta',{key:k,value:1});}
+    if(get('seeded')&&!get('tplfix'))await restoreSeedPlans();
+    for(const k of ['tplfix','seedfig','seedfig2','pack2','pack3','pack4','pack5','pack6','pack7','pack8','pack9','pack10']){if(!get(k))await dbPut('meta',{key:k,value:1});}
     if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
   }catch(err){console.error(err);$('#main').innerHTML='<div class="empty">データの保存場所をひらけませんでした。プライベートブラウズを切って、もう一度ひらいてください。</div>';return;}
   render();
