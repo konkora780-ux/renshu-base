@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>練習ベース</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#1B6B3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="練習ベース">
+<style>
+:root{
+  --green:#1B6B3A; --green-d:#134E2A; --green-l:#E7F2EA; --ink:#1C2420; --sub:#5C6A62;
+  --line:#D5DDD7; --bg:#F4F7F4; --card:#fff; --warn:#B4541A; --danger:#B3261E;
+  --wup:#C77700; --tr1:#1565C0; --tr2:#6A3FB5; --game:#1B6B3A;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;color:var(--ink);background:var(--bg);font-size:16px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+header.top{position:sticky;top:0;z-index:20;background:var(--green);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;display:flex;align-items:center;gap:10px}
+header.top h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.04em}
+header.top small{opacity:.8;font-size:12px}
+main{max-width:1100px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom) + 96px)}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:none;padding:10px 4px 8px;font-size:12px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button.on{color:var(--green);font-weight:700}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.grow{flex:1}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;min-height:44px;font-size:15px}
+.btn.pri{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.btn.danger{color:var(--danger);border-color:#E7C2BF}
+.btn.sm{min-height:36px;padding:5px 10px;font-size:14px}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--green);font-weight:700;padding-left:4px}
+.fab{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 76px);z-index:15;background:var(--green);color:#fff;border:0;border-radius:28px;padding:14px 20px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+input[type=text],input[type=search],input[type=number],input[type=date],input[type=url],select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;min-height:44px}
+textarea{min-height:92px;resize:vertical}
+label.f{display:block;margin-bottom:12px}
+label.f>span,.flabel{display:block;font-size:13px;font-weight:700;color:var(--sub);margin-bottom:4px}
+.hint{font-size:12px;color:var(--sub);font-weight:400}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.chip span{display:inline-block;border:1px solid var(--line);background:#fff;border-radius:18px;padding:6px 12px;font-size:14px;min-height:36px}
+.chip input:checked+span{background:var(--green);border-color:var(--green);color:#fff;font-weight:700}
+.chip input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.panel h3{margin:0 0 10px;font-size:16px}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0}
+.count{font-size:13px;color:var(--sub);margin:6px 2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.card{text-align:left;border:1px solid var(--line);background:#fff;border-radius:14px;overflow:hidden;padding:0;display:flex;flex-direction:column}
+.thumb{aspect-ratio:16/10;background:var(--green-l);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:contain;background:#fff}
+.thumb svg{width:58%;opacity:.55}
+.cbody{padding:10px 12px 12px}
+.cbody h3{margin:4px 0 2px;font-size:16px;line-height:1.4}
+.meta{font-size:12.5px;color:var(--sub);margin:0}
+.badge{display:inline-block;font-size:12px;font-weight:700;color:#fff;border-radius:6px;padding:1px 8px;margin-right:4px;background:var(--sub)}
+.cat-wup{background:var(--wup)}.cat-tr1{background:var(--tr1)}.cat-tr2{background:var(--tr2)}.cat-game{background:var(--game)}
+.star{color:#D99A00}
+.empty{text-align:center;color:var(--sub);padding:36px 12px}
+/* カード詳細（JFA資料と同じ並び） */
+.sheet{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sheet-head{display:flex;align-items:stretch;border-bottom:3px solid #111}
+.sheet-head .tema-l{background:#111;color:#fff;font-weight:700;padding:8px 14px;white-space:nowrap}
+.sheet-head .tema{font-weight:800;font-size:19px;padding:6px 14px;flex:1}
+.sheet-head .srcline{font-size:12px;color:var(--sub);padding:10px 12px;text-align:right}
+.sheet-body{padding:14px}
+.sheet h2{margin:0 0 12px;font-size:22px;line-height:1.35}
+.sheet h2 .catbig{font-size:26px;font-weight:900;margin-right:10px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:720px){.cols{grid-template-columns:1fr}}
+.figs img{width:100%;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:#fff;display:block}
+.nofig{border:1px dashed var(--line);border-radius:8px;padding:28px 10px;text-align:center;color:var(--sub);font-size:14px}
+.sheet h4{margin:0 0 4px;font-size:15px}
+.sheet dl{margin:0 0 12px}
+.sheet dt{font-weight:700;font-size:14px;margin-top:4px}
+.sheet dd{margin:0 0 2px 1em}
+.pre{white-space:pre-wrap}
+.keybox{border:1.5px solid #111;margin:14px 0 12px;padding:14px 12px 8px;position:relative}
+.keybox h4{position:absolute;top:-13px;left:-1.5px;background:#111;color:#fff;padding:1px 12px;font-size:14px}
+.keybox ul{margin:0;padding-left:1.2em}
+.notebox{border:1px dashed #555;margin:16px 0 12px;padding:14px 12px 8px;position:relative}
+.notebox h4{position:absolute;top:-13px;left:8px;background:#E3E6E4;padding:1px 12px;font-size:14px}
+.notebox.gk h4{background:#BFE0E6}
+.facts{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--sub);margin-top:10px}
+.oplist a{display:inline-block;margin:2px 8px 2px 0}
+a{color:var(--green)}
+/* 計画 */
+.planrow{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;width:100%;text-align:left}
+.planrow b{display:block}
+.total{font-weight:700;margin:4px 0 12px}
+.total.over{color:var(--warn)}
+.slot{background:#fff;border:1px solid var(--line);border-left:6px solid var(--sub);border-radius:12px;padding:12px;margin-bottom:10px}
+.slot.s-wup{border-left-color:var(--wup)}.slot.s-tr1{border-left-color:var(--tr1)}.slot.s-tr2{border-left-color:var(--tr2)}.slot.s-game{border-left-color:var(--game)}
+.slot-h{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.slot-h .name{font-weight:800;font-size:17px}
+.slot-card{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.slot-card img{width:96px;height:64px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:#fff}
+.slot-card .t{font-weight:700;font-size:16px;border:0;background:none;padding:0;text-align:left;color:var(--green);text-decoration:underline}
+.pickbtn{width:100%;border:2px dashed var(--line);background:var(--bg);border-radius:10px;padding:16px;color:var(--sub);font-weight:700;margin-bottom:8px}
+.slot-f{display:grid;grid-template-columns:110px 1fr;gap:8px}
+.iconbtn{border:1px solid var(--line);background:#fff;border-radius:8px;width:36px;height:36px;padding:0}
+/* モーダル */
+#modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+#modal.on{display:flex}
+#modal .box{background:#fff;width:100%;max-width:720px;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 16px)}
+@media(min-width:760px){#modal{align-items:center}#modal .box{border-radius:18px}}
+.pickitem{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;margin-bottom:6px}
+.pickitem img,.pickitem .ph{width:84px;height:56px;object-fit:contain;border:1px solid var(--line);border-radius:6px;background:var(--green-l);flex:none}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translateX(-50%);background:#222;color:#fff;border-radius:22px;padding:10px 18px;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.on{opacity:1}
+#a2hs{background:#FFF4D6;border:1px solid #E5C76B;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:14px;display:none}
+.imgstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.imgstrip .it{position:relative}
+.imgstrip img{height:92px;border:1px solid var(--line);border-radius:8px;display:block;background:#fff}
+.imgstrip button{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:14px;border:0;background:#222;color:#fff;padding:0}
+#print{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;font-size:11pt}
+  body>*:not(#print){display:none!important}
+  #print{display:block}
+  .p-head{border-bottom:3px solid #111;margin-bottom:8px;padding-bottom:4px}
+  .p-head h1{margin:0;font-size:18pt}
+  .p-head p{margin:2px 0 0;font-size:10.5pt}
+  table.p-table{width:100%;border-collapse:collapse;font-size:10pt}
+  .p-table th,.p-table td{border:1px solid #333;padding:4px 6px;vertical-align:top;text-align:left}
+  .p-table th{background:#eee}
+  .p-table img{max-width:42mm;max-height:30mm;display:block;margin-top:3px}
+  .p-table ul{margin:0;padding-left:1.1em}
+  .p-memo{border:1px solid #333;min-height:28mm;margin-top:8px;padding:4px 6px;font-size:10pt}
+  .p-page{break-before:page}
+  .sheet{border:0;border-radius:0}
+  .sheet-body{padding:8px 0}
+  .figs img{max-height:95mm;width:auto;max-width:100%}
+  .keybox,.notebox,.slot{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="top"><h1>練習ベース</h1><small>サッカー</small></header>
+<main id="main"></main>
+<nav class="tabs">
+  <button data-act="tab" data-tab="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>図鑑</button>
+  <button data-act="tab" data-tab="plans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M8 11h8M8 15h8"/></svg>計画</button>
+  <button data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>設定</button>
+</nav>
+<div id="modal"><div class="box" id="modalBox"></div></div>
+<div id="toast"></div>
+<div id="print"></div>
+
+<script>
+'use strict';
+/* ========== 定数 ========== */
+const CATS=[{id:'wup',label:'W-up'},{id:'tr1',label:'Tr.1'},{id:'tr2',label:'Tr.2'},{id:'game',label:'Game'}];
+const AGES=['U-8','U-10','U-12','U-15','U-18','一般'];
+const SRC={own:'自作',jfa:'JFAなどの資料',web:'ネット',book:'書籍'};
+const EQUIP=['ボール','マーカー','コーン','ビブス','ゴール','ミニゴール'];
+const DEFAULT_THEMES=[
+  ['攻撃','ゴールを奪う（シュート）'],['攻撃','ボールを運ぶ（ドリブル）'],['攻撃','パス＆コントロール'],['攻撃','ポゼッション'],['攻撃','ビルドアップ'],['攻撃','クロス'],['攻撃','コンビネーション'],
+  ['守備','ボールを奪う'],['守備','ゴールを守る'],['守備','1対1の守備'],['守備','チャレンジ＆カバー'],
+  ['切り替え','攻→守'],['切り替え','守→攻'],
+  ['GK','キャッチング'],['GK','ポジショニング'],['GK','配球'],
+  ['からだ','コーディネーション'],['からだ','アジリティ'],['からだ','ボールフィーリング']
+].map(([group,name])=>({group,name}));
+const PITCH='<svg viewBox="0 0 100 62" fill="none" stroke="#1B6B3A" stroke-width="2"><rect x="2" y="2" width="96" height="58" rx="2"/><path d="M50 2v58"/><circle cx="50" cy="31" r="9"/><rect x="2" y="19" width="12" height="24"/><rect x="86" y="19" width="12" height="24"/></svg>';
+
+/* ========== 小道具 ========== */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const uid=()=>crypto.randomUUID?crypto.randomUUID():'id-'+Date.now().toString(36)+Math.random().toString(36).slice(2);
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+const lines=s=>String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+const num=v=>{const n=parseInt(v,10);return Number.isFinite(n)&&n>=0?n:null;};
+const catLabel=id=>(CATS.find(c=>c.id===id)||{}).label||id;
+const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+const safeImg=u=>/^data:image\//.test(u||'');
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2600);}
+
+/* ========== 保存（IndexedDB） ========== */
+let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open('renshu-base',1);
+  r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('cards',{keyPath:'id'});d.createObjectStore('plans',{keyPath:'id'});d.createObjectStore('meta',{keyPath:'key'});};
+  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+const store=(name,mode)=>db.transaction(name,mode).objectStore(name);
+const req=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+const dbAll=name=>req(store(name,'readonly').getAll());
+const dbPut=(name,o)=>req(store(name,'readwrite').put(o)).catch(e=>{console.error(e);toast('保存に失敗しました。空き容量を確認してください');});
+const dbDel=(name,id)=>req(store(name,'readwrite').delete(id));
+
+/* ========== 状態 ========== */
+const S={cards:[],plans:[],themes:[]};
+const F={q:'',cat:'',theme:'',age:'',players:'',src:'',fav:false};
+let stack=[{name:'library'}];
+let edit=null;   // カード編集中の一時データ {images,opIds}
+let picker=null; // カード選択モーダルの状態
+const card=id=>S.cards.find(c=>c.id===id);
+const plan=id=>S.plans.find(p=>p.id===id);
+const view=()=>stack[stack.length-1];
+function go(v){stack.push(v);render();window.scrollTo(0,0);}
+function back(){if(stack.length>1)stack.pop();render();}
+
+function normCard(o){
+  const arr=v=>Array.isArray(v)?v.map(String).filter(Boolean):(v?String(v).split(/[、,]/).map(x=>x.trim()).filter(Boolean):[]);
+  const txt=v=>Array.isArray(v)?v.join('\n'):String(v??'');
+  const src=o.src&&typeof o.src==='object'?o.src:{};
+  return {id:o.id||uid(),sport:o.sport||'soccer',name:String(o.name||'（名前なし）'),
+    cats:arr(o.cats).filter(c=>CATS.some(x=>x.id===c)),themes:arr(o.themes),ages:arr(o.ages),
+    minP:num(o.minP),maxP:num(o.maxP),gk:!!o.gk,minutes:num(o.minutes),size:String(o.size||''),equip:arr(o.equip),
+    method:txt(o.method),keys:txt(o.keys),steps:txt(o.steps),notes:txt(o.notes),gkPoints:txt(o.gkPoints),
+    images:(Array.isArray(o.images)?o.images:[]).filter(safeImg),opIds:arr(o.opIds),
+    src:{type:SRC[src.type]?src.type:'own',title:String(src.title||''),url:String(src.url||'')},
+    memo:txt(o.memo),fav:!!o.fav,share:!!o.share,created:o.created||Date.now(),updated:o.updated||Date.now()};
+}
+function normPlan(o){
+  return {id:o.id||uid(),date:String(o.date||today()),title:String(o.title||''),theme:String(o.theme||''),age:String(o.age||''),
+    players:num(o.players),totalMin:num(o.totalMin),
+    slots:(Array.isArray(o.slots)?o.slots:[]).map(s=>({id:s.id||uid(),cat:CATS.some(c=>c.id===s.cat)?s.cat:'tr1',cardId:s.cardId||null,minutes:num(s.minutes),memo:String(s.memo||'')})),
+    review:String(o.review||''),template:!!o.template,created:o.created||Date.now(),updated:o.updated||Date.now()};
+}
+const saveCard=c=>{c.updated=Date.now();return dbPut('cards',c);};
+const savePlan=p=>{p.updated=Date.now();return dbPut('plans',p);};
+const saveThemes=()=>dbPut('meta',{key:'themes',value:S.themes});
+const planTitle=p=>p.title||`${p.date} ${p.theme||'トレーニング'}`;
+const slotMin=s=>s.minutes??(card(s.cardId)||{}).minutes??null;
+
+/* ========== お手本カード ========== */
+function seedData(){
+  const src={type:'jfa',title:'JFA 2016 U-12NTC 04 実技④ ゴールを奪う',url:'https://www.jfa.jp/youth_development/national_tracen/pdf/ntc_u12_menu_04.pdf'};
+  const th=['ゴールを奪う（シュート）'], base={ages:['U-12'],src,share:false};
+  const kf4='ゴールへの意識（チャンスを逃さない）\nボールをしっかりとらえる\n動きながらのパス、コントロールの質\n動き出しのタイミング（マークを外す）';
+  const c=[
+    {id:'seed-ntc04-1',name:'3対3＋3サーバー ハンドパス',cats:['wup'],themes:[...th,'パス＆コントロール'],minP:9,maxP:9,size:'12m×12m',equip:['ボール','マーカー','ビブス'],
+     method:'手でパスをつなぐ。外のサーバー3人を含め、6人対3人でボールを保持する\nグリッドを4つのゾーンに分け、1つのゾーンに入れるのは1人だけ\n中の3対3は、マークする相手を決めておく\nサーバーは3人で4つの辺を動いてサポートする\nサーバーへのリターンパスはなし。サーバーどうしのパスはOK\nインターセプト、両手タッチ、ボールを落としたら攻守交代（状況によりワンバウンドまでOK）',
+     keys:'動き出しのタイミング（マークを外す）\nパスの質',
+     steps:'① 3人が同じゾーンに重ならないよう観ながら、ボールを失わずに回す\n② マークを外す動きを入れて、空いたスペースで受ける\nオプション：味方の動きを観ながら、空いたゾーンで受ける',
+     notes:'一度に全部を求めず、一つずつ積み上げる\nマークを外す動きは受ける前に大きく。出し手がパスを出せるタイミングで動き出す\nサーバーには、空いた辺へ動くこと、中をよく観てフリーな選手に出すこと、サーバーどうしのパスで時間を作ることを促す'},
+    {id:'seed-ntc04-2',name:'シュートドリル①②',cats:['wup'],themes:th,gk:true,size:'ペナルティエリアの手前（スタート位置はレベルで調整）',equip:['ボール','ゴール','マーカー','コーン'],
+     method:'① ドリブルでコーンをかわしてシュート\n② 手で投げてもらったボールをヘディングで返し、リターンをボレーシュート\nGKはフィールドプレーヤーが交代で入る',
+     keys:'ゴールへの意識（チャンスを逃さない）\nボールをしっかりとらえる',
+     notes:'ゆっくり正確に、から始める。しっかりとらえながら4隅を狙う\nかわしてからシュートまでを速く\n観る（先に観ておく、移動中に観る、体の向き）\nタイミング、踏み込み足、インパクト、シュートコース'},
+    {id:'seed-ntc04-3',name:'シュートドリル③④',cats:['tr1'],themes:th,gk:true,size:'ペナルティエリアの手前（スタート位置はレベルで調整）',equip:['ボール','ゴール','マーカー','コーン'],
+     method:'③ スクリーンターン、プルアウェイ、ダイアゴナルランでボールを引き出してシュート\n④ 横からのボール（クロス）をシュート\nコーンをオフサイドラインに見立てる。GKが入る',
+     keys:kf4.replace('（マークを外す）',''),
+     notes:'コントロールからシュートまでを速く\n③ 出し手もシュートかパスかの選択肢を持つ\n③ 出し手はコーン（相手）を内側にかわす。蹴れるタイミングで受け手が動き出す\nコーチがDF役に入り、相手との駆け引きを引き出す\nダイナミックな動きからのシュートで試合に近づける。タイミングを大切に\n④ コーン（相手）の背後で受けてワンタッチシュート。浮き球のクロスはレベルに合わせて入れる'},
+    {id:'seed-ntc04-4',name:'2対2＋3サーバーのゲーム',cats:['tr2'],themes:th,minP:8,maxP:8,gk:true,size:'20m×25m',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['seed-ntc04-5'],
+     method:'攻撃側はゴールを目指す\n守備側は奪ったらサーバーに当て、一度押し上げたら攻守交代\nオフサイドあり（ペナルティエリアのライン。サーバーも含む）\nGKがシュートを捕ったら、サーバーへパスして攻守交代',
+     keys:kf4,
+     notes:'ボールを持っている時も持っていない時もゴールを意識し、シンプルにシュート\n背負った状態からのターンや、突破からのシュートに挑戦させる\nまずゴール前で点を取ることを強調する\nサイドのサーバーも使えるようにするとシュート数が増える。中央まで戻すとゲームに近づく\n横からのボール、スルーパス、浮き球など、いろいろなシュートの技術に声をかける\nGKのプレー回数と準備の時間のバランスに気を配る',
+     gkPoints:'ボールの状況に合わせてポジションをとれているか\nパスが流れた時やコントロールが大きくなった時に、ボールへ出られているか\nセカンドボールにもプレーしているか\nコーチング（1stDFの決定、オフのポジショニング）'},
+    {id:'seed-ntc04-5',name:'3対3＋サーバー（発展）',cats:['tr2'],themes:[...th,'コンビネーション'],minP:8,maxP:8,gk:true,size:'25m×29m',equip:['ボール','ゴール','マーカー','ビブス'],
+     method:'3対3＋サーバー1人で行う\n攻撃側はゴールを目指す\n守備側は奪ったらサーバーに当て、一度押し上げたら攻守交代\nオフサイドあり（ペナルティエリアのライン）\nGKがシュートを捕ったら、サーバーへパスして攻守交代',
+     keys:kf4,
+     notes:'深さ（25m）があるのでギャップが生まれ、コンビネーションが出やすい\nシュートの反復回数が足りているか注意する\n中央のサーバーが2タッチ以内でシュートを打てるルールにすると、相手の対応が変わる'},
+    {id:'seed-ntc04-6',name:'4対4＋1F＋GK → 5対5＋GK',cats:['game'],themes:th,minP:11,maxP:12,gk:true,size:'45m×29m',equip:['マーカー','ボール','ビブス','ゴール'],
+     method:'① 4対4＋フリーマン1人＋GK。アウトオブプレー後はGKから再開\nフリーマンは2タッチ以内、シュートなし\nオフサイドあり\n② 5対5＋GK',
+     keys:kf4,
+     gkPoints:'ボールとまわりの状況を観ながら、攻守でポジションをとり続けているか\nコーチング（1stDFの決定、オフのポジショニング、攻撃時のリスク管理）'}
+  ].map(x=>normCard({...base,...x}));
+  const p=normPlan({id:'seed-plan-ntc04',title:'ゴールを奪う（お手本）',theme:th[0],age:'U-12',template:true,
+    slots:[['wup','seed-ntc04-1'],['wup','seed-ntc04-2'],['tr1','seed-ntc04-3'],['tr2','seed-ntc04-4'],['game','seed-ntc04-6']].map(([cat,cardId])=>({cat,cardId}))});
+  return {cards:c,plans:[p]};
+}
+async function putSeed(){
+  const sd=seedData();
+  for(const c of sd.cards){if(!card(c.id)){S.cards.push(c);await dbPut('cards',c);}}
+  for(const p of sd.plans){if(!plan(p.id)){S.plans.push(p);await dbPut('plans',p);}}
+}
+
+/* ========== 図鑑 ========== */
+function themeOptions(sel,emptyLabel){
+  const groups=[...new Set(S.themes.map(t=>t.group))];
+  return `<option value="">${esc(emptyLabel)}</option>`+groups.map(g=>`<optgroup label="${esc(g)}">${S.themes.filter(t=>t.group===g).map(t=>`<option${t.name===sel?' selected':''}>${esc(t.name)}</option>`).join('')}</optgroup>`).join('');
+}
+const opt=(list,sel,emptyLabel)=>`<option value="">${esc(emptyLabel)}</option>`+list.map(([v,l])=>`<option value="${esc(v)}"${v===sel?' selected':''}>${esc(l)}</option>`).join('');
+function matchPlayers(c,n){return n==null||((c.minP==null||c.minP<=n)&&(c.maxP==null||n<=c.maxP));}
+function matchCard(c){
+  if(F.cat&&!c.cats.includes(F.cat))return false;
+  if(F.theme&&!c.themes.includes(F.theme))return false;
+  if(F.age&&c.ages.length&&!c.ages.includes(F.age))return false;
+  if(F.src&&c.src.type!==F.src)return false;
+  if(F.fav&&!c.fav)return false;
+  if(!matchPlayers(c,num(F.players)))return false;
+  if(F.q){const hay=[c.name,c.themes.join(' '),c.method,c.keys,c.notes,c.memo,c.size,c.src.title].join(' ').toLowerCase();
+    if(!F.q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w)))return false;}
+  return true;
+}
+const badges=c=>c.cats.map(k=>`<span class="badge cat-${k}">${catLabel(k)}</span>`).join('');
+function cardMeta(c){
+  const p=c.minP!=null||c.maxP!=null?(c.minP===c.maxP?`${c.minP}人`:`${c.minP??''}〜${c.maxP??''}人`):'';
+  return [c.themes[0],c.size,p,c.minutes!=null?`${c.minutes}分`:''].filter(Boolean).join(' ・ ');
+}
+function vLibrary(){
+  return `<div class="bar"><input type="search" data-ff="q" placeholder="キーワードでさがす" value="${esc(F.q)}"></div>
+  <div class="chips">${CATS.map(c=>`<label class="chip"><input type="checkbox" data-ff="cat" value="${c.id}"${F.cat===c.id?' checked':''}><span>${c.label}</span></label>`).join('')}
+    <label class="chip"><input type="checkbox" data-ff="fav"${F.fav?' checked':''}><span>★ お気に入り</span></label></div>
+  <div class="filters">
+    <select data-ff="theme" aria-label="テーマ">${themeOptions(F.theme,'テーマ：すべて')}</select>
+    <select data-ff="age" aria-label="年代">${opt(AGES.map(a=>[a,a]),F.age,'年代：すべて')}</select>
+    <input type="number" data-ff="players" inputmode="numeric" min="1" placeholder="人数（例：12）" value="${esc(F.players)}" aria-label="人数">
+    <select data-ff="src" aria-label="出典">${opt(Object.entries(SRC),F.src,'出典：すべて')}</select>
+  </div>
+  <div id="grid"></div>
+  <button class="fab" data-act="newCard">＋ カード</button>`;
+}
+function renderGrid(){
+  const g=$('#grid');if(!g)return;
+  const list=S.cards.filter(matchCard).sort((a,b)=>(b.fav-a.fav)||(b.updated-a.updated));
+  g.innerHTML=`<p class="count">${list.length}枚 / 全${S.cards.length}枚</p>`+(list.length?`<div class="cards">${list.map(c=>`
+    <button class="card" data-act="open" data-id="${esc(c.id)}">
+      <div class="thumb">${c.images[0]?`<img src="${c.images[0]}" alt="">`:PITCH}</div>
+      <div class="cbody">${badges(c)}${c.fav?'<span class="star">★</span>':''}<h3>${esc(c.name)}</h3><p class="meta">${esc(cardMeta(c))}</p></div>
+    </button>`).join('')}</div>`:`<div class="empty">${S.cards.length?'条件に合うカードがありません。しぼり込みをゆるめてください。':'カードがまだありません。「＋ カード」から登録できます。'}</div>`);
+}
+
+/* ========== カード詳細 ========== */
+const ul=s=>{const l=lines(s);return l.length?`<ul>${l.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';};
+function sheetHTML(c){
+  const p=c.minP!=null||c.maxP!=null?(c.minP===c.maxP?`${c.minP}人`:`${c.minP??''}〜${c.maxP??''}人`):'';
+  const facts=[c.ages.length?`対象：${c.ages.join('／')}`:'',p?`人数：${p}${c.gk?'（GKあり）':''}`:(c.gk?'GKあり':''),c.minutes!=null?`時間：${c.minutes}分`:''].filter(Boolean);
+  const url=safeUrl(c.src.url);
+  const srcTxt=`出典：${SRC[c.src.type]}${c.src.title?'　'+esc(c.src.title):''}`;
+  const ops=c.opIds.map(card).filter(Boolean);
+  return `<article class="sheet">
+    <div class="sheet-head"><span class="tema-l">テーマ</span><span class="tema">${esc(c.themes.join('・')||'未設定')}</span><span class="srcline">${esc(SRC[c.src.type])}</span></div>
+    <div class="sheet-body">
+      <h2><span class="catbig">${c.cats.map(catLabel).join(' / ')}</span>${esc(c.name)}</h2>
+      <div class="cols">
+        <div class="figs">${c.images.length?c.images.map(i=>`<img src="${i}" alt="図">`).join(''):'<div class="nofig">図はまだありません</div>'}</div>
+        <div>
+          <h4>オーガナイズ</h4>
+          <dl>${c.size?`<dt>(1) 大きさ</dt><dd>${esc(c.size)}</dd>`:''}${c.equip.length?`<dt>(2) 用具</dt><dd>${esc(c.equip.join('、'))}</dd>`:''}${c.method?`<dt>(3) 方法</dt><dd>${ul(c.method)}</dd>`:''}</dl>
+          ${c.keys?`<div class="keybox"><h4>キーファクター</h4>${ul(c.keys)}</div>`:''}
+        </div>
+      </div>
+      ${c.steps?`<h4>トレーニングの積み上げ</h4><div class="pre">${esc(c.steps)}</div>`:''}
+      ${c.notes?`<div class="notebox"><h4>留意点</h4>${ul(c.notes)}</div>`:''}
+      ${c.gkPoints?`<div class="notebox gk"><h4>GKポイント</h4>${ul(c.gkPoints)}</div>`:''}
+      ${ops.length?`<h4>発展形（OP）</h4><div class="oplist">${ops.map(o=>`<a href="#" data-act="open" data-id="${esc(o.id)}">${esc(o.name)}</a>`).join('')}</div>`:''}
+      ${facts.length?`<div class="facts">${facts.map(f=>`<span>${esc(f)}</span>`).join('')}</div>`:''}
+      <div class="facts"><span>${srcTxt}${url?`　<a href="${esc(url)}" target="_blank" rel="noopener">もとの資料をひらく</a>`:''}</span><span>${c.share?'共有してよい':'自分用'}</span></div>
+      ${c.memo?`<h4 style="margin-top:12px">自分のメモ</h4><div class="pre">${esc(c.memo)}</div>`:''}
+    </div></article>`;
+}
+function vCard(id){
+  const c=card(id);if(!c)return `<div class="empty">カードが見つかりません。</div><button class="btn" data-act="back">もどる</button>`;
+  return `<div class="bar"><button class="btn ghost" data-act="back">‹ もどる</button><span class="grow"></span>
+    <button class="btn sm" data-act="fav" data-id="${esc(id)}">${c.fav?'★ お気に入り':'☆ お気に入り'}</button>
+    <button class="btn sm" data-act="editCard" data-id="${esc(id)}">編集</button>
+    <button class="btn sm" data-act="dupCard" data-id="${esc(id)}">複製</button></div>
+  ${sheetHTML(c)}
+  <div class="bar" style="margin-top:14px"><button class="btn pri" data-act="addToPlan" data-id="${esc(id)}">計画に入れる</button><span class="grow"></span><button class="btn danger sm" data-act="delCard" data-id="${esc(id)}">削除</button></div>`;
+}
+
+/* ========== カード登録・編集 ========== */
+const chipSet=(name,list,sel)=>`<div class="chips">${list.map(([v,l])=>`<label class="chip"><input type="checkbox" name="${name}" value="${esc(v)}"${sel.includes(v)?' checked':''}><span>${esc(l)}</span></label>`).join('')}</div>`;
+function vCardEdit(id){
+  const c=id?card(id):normCard({name:'',ages:['U-12']});
+  if(!edit)edit={images:[...c.images],opIds:[...c.opIds]};
+  const extraThemes=c.themes.filter(t=>!S.themes.some(x=>x.name===t));
+  const extraEquip=c.equip.filter(e=>!EQUIP.includes(e));
+  const ta=(n,l,v,h)=>`<label class="f"><span>${l}${h?` <span class="hint">${h}</span>`:''}</span><textarea name="${n}">${esc(v)}</textarea></label>`;
+  return `<form id="cardForm" autocomplete="off">
+  <div class="bar"><button type="button" class="btn ghost" data-act="cancelEdit">‹ やめる</button><span class="grow"></span><button type="submit" class="btn pri">保存する</button></div>
+  <div class="panel"><h3>きほん</h3>
+    <label class="f"><span>メニュー名（必須）</span><input type="text" name="name" required value="${id?esc(c.name):''}" placeholder="例：3対3＋3サーバー ハンドパス"></label>
+    <div class="f"><span class="flabel">区分（必須・複数えらべます）</span>${chipSet('cats',CATS.map(x=>[x.id,x.label]),c.cats)}</div>
+    <div class="f"><span class="flabel">テーマ（目的）</span>${chipSet('themes',[...S.themes.map(t=>[t.name,t.name]),...extraThemes.map(t=>[t,t])],c.themes)}
+      <input type="text" name="themeNew" placeholder="一覧にないテーマを追加（、で区切る）" style="margin-top:8px"></div>
+    <div class="f"><span class="flabel">対象年代</span>${chipSet('ages',AGES.map(a=>[a,a]),c.ages)}</div>
+    <div class="grid2">
+      <label class="f"><span>人数（最少）</span><input type="number" name="minP" min="1" inputmode="numeric" value="${c.minP??''}"></label>
+      <label class="f"><span>人数（最大）</span><input type="number" name="maxP" min="1" inputmode="numeric" value="${c.maxP??''}"></label>
+      <label class="f"><span>所要時間（分）</span><input type="number" name="minutes" min="0" inputmode="numeric" value="${c.minutes??''}"></label>
+    </div>
+    <label class="chip"><input type="checkbox" name="gk"${c.gk?' checked':''}><span>GKが必要</span></label>
+  </div>
+  <div class="panel"><h3>図</h3>
+    <div class="imgstrip" id="imgstrip"></div>
+    <label class="btn" style="display:inline-flex;align-items:center">画像・写真を追加<input type="file" id="imgIn" accept="image/*" multiple hidden></label>
+    <p class="hint">手描きの図を撮影して添付できます。1枚目が図鑑の表紙になります。</p>
+  </div>
+  <div class="panel"><h3>オーガナイズ</h3>
+    <label class="f"><span>(1) 大きさ</span><input type="text" name="size" value="${esc(c.size)}" placeholder="例：12m×12m"></label>
+    <div class="f"><span class="flabel">(2) 用具</span>${chipSet('equip',EQUIP.map(e=>[e,e]),c.equip)}
+      <input type="text" name="equipNew" value="${esc(extraEquip.join('、'))}" placeholder="そのほかの用具（、で区切る）" style="margin-top:8px"></div>
+    ${ta('method','(3) 方法',c.method,'1行に1つずつ')}
+  </div>
+  <div class="panel"><h3>指導のポイント</h3>
+    ${ta('keys','キーファクター',c.keys,'1行に1つずつ')}
+    ${ta('steps','トレーニングの積み上げ',c.steps,'①②…と段階を書く')}
+    ${ta('notes','留意点',c.notes,'1行に1つずつ')}
+    ${ta('gkPoints','GKポイント',c.gkPoints,'なければ空欄')}
+  </div>
+  <div class="panel"><h3>発展形（OP）</h3>
+    <div id="oplist"></div>
+    <select id="opAdd"><option value="">べつのカードを発展形としてつなぐ…</option>${S.cards.filter(x=>x.id!==id).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select>
+  </div>
+  <div class="panel"><h3>出典とメモ</h3>
+    <div class="grid2">
+      <label class="f"><span>出典の種類</span><select name="srcType">${Object.entries(SRC).map(([v,l])=>`<option value="${v}"${c.src.type===v?' selected':''}>${l}</option>`).join('')}</select></label>
+      <label class="f"><span>資料名</span><input type="text" name="srcTitle" value="${esc(c.src.title)}"></label>
+    </div>
+    <label class="f"><span>URL</span><input type="url" name="srcUrl" value="${esc(c.src.url)}" placeholder="https://"></label>
+    ${ta('memo','自分のメモ',c.memo,'やってみた感想、改善案')}
+    <label class="chip"><input type="checkbox" name="share"${c.share?' checked':''}><span>共有してよいカード</span></label>
+    <p class="hint">資料の文章や図をそのまま写したカードは「自分用」のままにしてください。</p>
+  </div>
+  <div class="bar"><span class="grow"></span><button type="submit" class="btn pri">保存する</button></div>
+  </form>`;
+}
+function renderEditParts(){
+  const s=$('#imgstrip');if(s)s.innerHTML=edit.images.map((src,i)=>`<div class="it"><img src="${src}" alt=""><button type="button" data-act="rmImg" data-i="${i}" aria-label="この画像を外す">×</button></div>`).join('');
+  const o=$('#oplist');if(o)o.innerHTML=edit.opIds.map(card).filter(Boolean).map(x=>`<div class="bar" style="margin-bottom:6px"><span>${esc(x.name)}</span><span class="grow"></span><button type="button" class="btn sm" data-act="rmOp" data-id="${esc(x.id)}">外す</button></div>`).join('');
+}
+function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const m=1400,k=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas');
+    cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.drawImage(im,0,0,cv.width,cv.height);
+    URL.revokeObjectURL(url);res(cv.toDataURL('image/jpeg',.85));};
+  im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('画像を読みこめません'));};im.src=url;});}
+async function submitCard(form){
+  const id=view().id, fd=new FormData(form), all=n=>fd.getAll(n).map(String);
+  const split=s=>String(s||'').split(/[、,]/).map(x=>x.trim()).filter(Boolean);
+  const cats=all('cats');
+  if(!cats.length){toast('区分を1つ以上えらんでください');return;}
+  const newThemes=split(fd.get('themeNew'));
+  for(const t of newThemes){if(!S.themes.some(x=>x.name===t))S.themes.push({group:'じぶんのテーマ',name:t});}
+  if(newThemes.length)await saveThemes();
+  const old=id?card(id):null;
+  const c=normCard({...(old||{}),name:String(fd.get('name')).trim(),cats,themes:[...new Set([...all('themes'),...newThemes])],ages:all('ages'),
+    minP:fd.get('minP'),maxP:fd.get('maxP'),minutes:fd.get('minutes'),gk:fd.has('gk'),size:fd.get('size'),equip:[...new Set([...all('equip'),...split(fd.get('equipNew'))])],
+    method:fd.get('method'),keys:fd.get('keys'),steps:fd.get('steps'),notes:fd.get('notes'),gkPoints:fd.get('gkPoints'),
+    images:edit.images,opIds:edit.opIds,src:{type:fd.get('srcType'),title:fd.get('srcTitle'),url:fd.get('srcUrl')},memo:fd.get('memo'),share:fd.has('share')});
+  if(old)S.cards[S.cards.indexOf(old)]=c;else S.cards.push(c);
+  await saveCard(c);edit=null;stack.pop();
+  if(!old)stack.push({name:'card',id:c.id});
+  render();toast('保存しました');
+}
+
+/* ========== 計画 ========== */
+function vPlans(){
+  const row=p=>{const names=p.slots.map(s=>card(s.cardId)).filter(Boolean).map(c=>c.name);
+    return `<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(planTitle(p))}</b><span class="meta">${esc([p.template?'':p.date,p.theme,p.age,names.length?`${names.length}メニュー`:'メニュー未選択'].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`;};
+  const ps=S.plans.filter(p=>!p.template).sort((a,b)=>b.date.localeCompare(a.date)||b.updated-a.updated);
+  const ts=S.plans.filter(p=>p.template);
+  return `<div class="bar"><button class="btn pri" data-act="newPlan">＋ 今日のトレーニングを作る</button></div>
+  <h3>計画</h3>${ps.length?ps.map(row).join(''):'<div class="empty">計画はまだありません。</div>'}
+  <h3>ひな型</h3>${ts.length?ts.map(row).join(''):'<p class="meta">計画を「ひな型にする」と、ここに並びます。</p>'}`;
+}
+function slotLabel(p,s){const same=p.slots.filter(x=>x.cat===s.cat);return catLabel(s.cat)+(same.length>1?` ${same.indexOf(s)+1}`:'');}
+function totalHTML(p){
+  const sum=p.slots.reduce((a,s)=>a+(slotMin(s)||0),0);
+  if(p.totalMin==null)return `<p class="total" id="total">合計 ${sum}分</p>`;
+  const d=p.totalMin-sum;
+  return `<p class="total${d<0?' over':''}" id="total">合計 ${sum}分 / 予定 ${p.totalMin}分（${d===0?'ぴったり':d>0?`あと${d}分`:`${-d}分オーバー`}）</p>`;
+}
+function vPlan(id){
+  const p=plan(id);if(!p)return `<div class="empty">計画が見つかりません。</div><button class="btn" data-act="back">もどる</button>`;
+  return `<div class="bar"><button class="btn ghost" data-act="back">‹ もどる</button><span class="grow"></span>
+    <button class="btn sm" data-act="planPrint" data-mode="list">印刷（一覧版）</button><button class="btn sm" data-act="planPrint" data-mode="detail">印刷（詳細版）</button></div>
+  ${p.template?'<p class="meta">これは「ひな型」です。下の「この型で計画を作る」から使えます。</p>':''}
+  <div class="panel"><div class="grid2">
+    <label class="f"><span>日付</span><input type="date" data-pf="date" value="${esc(p.date)}"></label>
+    <label class="f"><span>タイトル</span><input type="text" data-pf="title" value="${esc(p.title)}" placeholder="${esc(planTitle({...p,title:''}))}"></label>
+    <label class="f"><span>テーマ（目的）</span><select data-pf="theme">${themeOptions(p.theme,'きめない')}</select></label>
+    <label class="f"><span>対象</span><select data-pf="age">${opt(AGES.map(a=>[a,a]),p.age,'きめない')}</select></label>
+    <label class="f"><span>人数</span><input type="number" data-pf="players" min="1" inputmode="numeric" value="${p.players??''}"></label>
+    <label class="f"><span>総時間（分）</span><input type="number" data-pf="totalMin" min="0" inputmode="numeric" value="${p.totalMin??''}"></label>
+  </div></div>
+  <div class="bar"><h3 style="margin:0">メニュー</h3><span class="grow"></span><button class="btn sm" data-act="planAuto">おまかせで入れる</button></div>
+  ${totalHTML(p)}
+  ${p.slots.map((s,i)=>{const c=card(s.cardId);return `<div class="slot s-${s.cat}" data-sid="${esc(s.id)}">
+    <div class="slot-h"><span class="name">${esc(slotLabel(p,s))}</span><span class="grow"></span>
+      <button class="iconbtn" data-act="slotUp" aria-label="上へ"${i===0?' disabled':''}>↑</button><button class="iconbtn" data-act="slotDown" aria-label="下へ"${i===p.slots.length-1?' disabled':''}>↓</button><button class="iconbtn" data-act="slotDel" aria-label="この枠を消す">×</button></div>
+    ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0]}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div>
+      <button class="btn sm" data-act="pick">入れ替える</button><button class="btn sm" data-act="unpick">外す</button></div>`
+      :`<button class="pickbtn" data-act="pick">＋ ${esc(catLabel(s.cat))} のカードを選ぶ</button>`}
+    <div class="slot-f"><input type="number" data-sf="minutes" min="0" inputmode="numeric" placeholder="${c&&c.minutes!=null?c.minutes:'分'}" value="${s.minutes??''}" aria-label="時間（分）"><input type="text" data-sf="memo" value="${esc(s.memo)}" placeholder="この日だけのメモ"></div>
+  </div>`;}).join('')}
+  <div class="bar"><span class="meta">枠を追加：</span>${CATS.map(c=>`<button class="btn sm" data-act="slotAdd" data-cat="${c.id}">＋ ${c.label}</button>`).join('')}</div>
+  <div class="panel"><label class="f" style="margin:0"><span>ふりかえり（実施後の記録）</span><textarea data-pf="review" placeholder="うまくいったこと、次回なおすこと">${esc(p.review)}</textarea></label></div>
+  <div class="bar"><button class="btn" data-act="planDup">${p.template?'この型で計画を作る':'複製する'}</button><button class="btn" data-act="planTpl">${p.template?'ひな型をやめる':'ひな型にする'}</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`;
+}
+const curPlan=()=>plan(view().id);
+const slotOf=el=>{const p=curPlan(),sid=el.closest('[data-sid]').dataset.sid;return p.slots.find(s=>s.id===sid);};
+function candidates(p,s,o){
+  return S.cards.filter(c=>c.cats.includes(s.cat)
+    &&(!o.theme||!p.theme||c.themes.includes(p.theme))
+    &&(!o.age||!p.age||!c.ages.length||c.ages.includes(p.age))
+    &&(!o.players||matchPlayers(c,p.players)));
+}
+function autoFill(p){
+  let targets=p.slots.filter(s=>!card(s.cardId));
+  if(!targets.length){if(!confirm('すべての枠を入れなおしますか？'))return;targets=p.slots;}
+  const used=new Set(p.slots.filter(s=>!targets.includes(s)).map(s=>s.cardId));
+  let ok=0;
+  for(const s of targets){
+    let c=candidates(p,s,{theme:1,age:1,players:1}).filter(x=>!used.has(x.id));
+    if(!c.length)c=candidates(p,s,{theme:1}).filter(x=>!used.has(x.id));
+    if(!c.length){s.cardId=null;continue;}
+    const favs=c.filter(x=>x.fav), pool=favs.length?favs:c, pickd=pool[Math.floor(Math.random()*pool.length)];
+    s.cardId=pickd.id;used.add(pickd.id);ok++;
+  }
+  savePlan(p);render();
+  toast(ok===targets.length?`${ok}枠に入れました`:`${ok}枠に入れました。合うカードがない枠が${targets.length-ok}つあります`);
+}
+function renderPicker(){
+  const p=plan(picker.planId), s=p.slots.find(x=>x.id===picker.slotId);
+  const list=candidates(p,s,picker).filter(c=>!picker.q||c.name.toLowerCase().includes(picker.q.toLowerCase())).sort((a,b)=>(b.fav-a.fav)||a.name.localeCompare(b.name,'ja'));
+  const tg=(k,l,show)=>show?`<label class="chip"><input type="checkbox" data-pk="${k}"${picker[k]?' checked':''}><span>${esc(l)}</span></label>`:'';
+  $('#modalBox').innerHTML=`<div class="bar"><h3 style="margin:0">${esc(slotLabel(p,s))} のカードを選ぶ</h3><span class="grow"></span><button class="btn sm" data-act="closeModal">とじる</button></div>
+    <div class="chips" style="margin-bottom:8px">${tg('theme','テーマ：'+p.theme,p.theme)}${tg('age','対象：'+p.age,p.age)}${tg('players','人数：'+p.players+'人',p.players!=null)}</div>
+    <input type="search" data-pk="q" placeholder="名前でさがす" value="${esc(picker.q)}" style="margin-bottom:8px">
+    <div id="picklist">${list.length?list.map(c=>`<button class="pickitem" data-act="choose" data-id="${esc(c.id)}">${c.images[0]?`<img src="${c.images[0]}" alt="">`:'<span class="ph"></span>'}<span><b>${c.fav?'★ ':''}${esc(c.name)}</b><br><span class="meta">${esc(cardMeta(c))}</span></span></button>`).join(''):'<div class="empty">合うカードがありません。上のしぼり込みを外すか、図鑑にカードを登録してください。</div>'}</div>`;
+}
+function renderAddToPlan(cardId){
+  const ps=S.plans.filter(p=>!p.template).sort((a,b)=>b.date.localeCompare(a.date));
+  $('#modalBox').innerHTML=`<div class="bar"><h3 style="margin:0">どの計画に入れますか</h3><span class="grow"></span><button class="btn sm" data-act="closeModal">とじる</button></div>
+    <button class="btn pri" data-act="addToNew" data-id="${esc(cardId)}" style="width:100%;margin-bottom:10px">＋ あたらしい計画を作って入れる</button>
+    ${ps.map(p=>`<button class="pickitem" data-act="addToThis" data-id="${esc(cardId)}" data-pid="${esc(p.id)}"><span><b>${esc(planTitle(p))}</b><br><span class="meta">${esc(p.date)}</span></span></button>`).join('')}`;
+  $('#modal').classList.add('on');
+}
+function putIntoPlan(p,c){
+  const s=p.slots.find(x=>!card(x.cardId)&&c.cats.includes(x.cat));
+  if(s)s.cardId=c.id;else p.slots.push({id:uid(),cat:c.cats[0]||'tr1',cardId:c.id,minutes:null,memo:''});
+  savePlan(p);
+}
+const newPlan=()=>normPlan({age:'U-12',slots:CATS.map(c=>({cat:c.id}))});
+
+/* ========== 印刷 ========== */
+function printPlan(p,mode){
+  const info=[p.template?'':p.date,p.theme?`テーマ：${p.theme}`:'',p.age?`対象：${p.age}`:'',p.players!=null?`${p.players}人`:'',`合計 ${p.slots.reduce((a,s)=>a+(slotMin(s)||0),0)}分`].filter(Boolean).join('　');
+  const rows=p.slots.map(s=>{const c=card(s.cardId),m=slotMin(s);return `<tr><td style="white-space:nowrap"><b>${esc(slotLabel(p,s))}</b></td><td style="white-space:nowrap">${m!=null?m+'分':''}</td>
+    <td>${c?`<b>${esc(c.name)}</b>${c.images[0]?`<img src="${c.images[0]}" alt="">`:''}`:''}</td>
+    <td>${c?`${esc([c.size,c.equip.join('、')].filter(Boolean).join(' ／ '))}${mode==='list'?ul(c.method):''}`:''}</td>
+    <td>${c?ul(c.keys):''}${s.memo?`<div>メモ：${esc(s.memo)}</div>`:''}</td></tr>`;}).join('');
+  let h=`<div class="p-head"><h1>${esc(planTitle(p))}</h1><p>${esc(info)}</p></div>
+    <table class="p-table"><thead><tr><th>区分</th><th>時間</th><th>メニュー</th><th>オーガナイズ</th><th>キーファクター・メモ</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="p-memo">ふりかえり<div class="pre">${esc(p.review)}</div></div>`;
+  if(mode==='detail')h+=p.slots.map(s=>card(s.cardId)).filter(Boolean).map(c=>`<div class="p-page">${sheetHTML(c)}</div>`).join('');
+  $('#print').innerHTML=h;
+  setTimeout(()=>window.print(),150);
+}
+
+/* ========== 設定 ========== */
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isStandalone=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+function vSettings(){
+  const custom=S.themes.filter(t=>!DEFAULT_THEMES.some(d=>d.name===t.name));
+  return `<div class="panel"><h3>バックアップ</h3>
+    <p class="meta">カード ${S.cards.length}枚・計画 ${S.plans.length}件。データはこの端末の中だけに保存されています。ときどき書き出しておくと安心です。</p>
+    <div class="bar" style="margin-top:10px"><button class="btn pri" data-act="export">書き出す（JSON）</button>
+    <label class="btn" style="display:inline-flex;align-items:center">読みこむ<input type="file" id="importIn" accept=".json,application/json" hidden></label></div>
+    <p class="hint">読みこみは「追加」です。同じカードは新しい内容で上書きされ、ほかのカードは消えません。</p></div>
+  <div class="panel"><h3>テーマ（目的）の管理</h3>
+    <div class="bar"><input type="text" id="themeAdd" placeholder="あたらしいテーマ" style="flex:1;min-width:160px"><button class="btn" data-act="themeAdd">追加</button></div>
+    ${custom.length?custom.map(t=>`<div class="bar" style="margin-bottom:6px"><span>${esc(t.name)}</span><span class="grow"></span><button class="btn sm" data-act="themeDel" data-name="${esc(t.name)}">消す</button></div>`).join(''):'<p class="meta">自分で追加したテーマはまだありません。</p>'}</div>
+  <div class="panel"><h3>お手本カード</h3>
+    <p class="meta">JFA ナショナルトレセンU-12「ゴールを奪う」をもとにした6枚と、ひな型1件です。消してしまったときに入れなおせます。</p>
+    <button class="btn" data-act="reseed" style="margin-top:10px">お手本を入れなおす</button></div>
+  <div class="panel"><h3>iPad・iPhoneで使うとき</h3>
+    <p class="meta">Safariの共有ボタンから「ホーム画面に追加」をして、ホーム画面のアイコンから開いてください。Safariのままだと、7日間開かないとデータが消えることがあります。</p></div>`;
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify({app:'renshu-base',version:1,exported:new Date().toISOString(),themes:S.themes,cards:S.cards,plans:S.plans})],{type:'application/json'});
+  const name=`renshu-base-${today()}.json`, file=new File([blob],name,{type:'application/json'});
+  if(isIOS&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file]}).catch(()=>{});return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function importData(text){
+  let d;try{d=JSON.parse(text);}catch{toast('ファイルを読めませんでした（JSONではありません）');return;}
+  const cards=Array.isArray(d)?d:(Array.isArray(d.cards)?d.cards:[]), plans=Array.isArray(d.plans)?d.plans:[];
+  if(!cards.length&&!plans.length){toast('カードも計画も入っていませんでした');return;}
+  for(const t of (Array.isArray(d.themes)?d.themes:[])){if(t&&t.name&&!S.themes.some(x=>x.name===t.name))S.themes.push({group:String(t.group||'じぶんのテーマ'),name:String(t.name)});}
+  for(const raw of cards){const c=normCard(raw);for(const t of c.themes){if(!S.themes.some(x=>x.name===t))S.themes.push({group:'じぶんのテーマ',name:t});}
+    const i=S.cards.findIndex(x=>x.id===c.id);if(i>=0)S.cards[i]=c;else S.cards.push(c);await dbPut('cards',c);}
+  for(const raw of plans){const p=normPlan(raw);const i=S.plans.findIndex(x=>x.id===p.id);if(i>=0)S.plans[i]=p;else S.plans.push(p);await dbPut('plans',p);}
+  await saveThemes();render();toast(`カード${cards.length}枚・計画${plans.length}件を読みこみました`);
+}
+
+/* ========== 描画 ========== */
+function render(){
+  const v=view(), m=$('#main');
+  const root=stack[0].name;
+  $$('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===root));
+  const a2=isIOS&&!isStandalone()&&!sessionStorage.getItem('a2hs')?`<div id="a2hs" style="display:block">ホーム画面に追加して使ってください（Safariのままだとデータが消えることがあります）。<button class="btn sm" data-act="a2hsClose" style="margin-left:6px">とじる</button></div>`:'';
+  m.innerHTML=a2+({library:vLibrary,plans:vPlans,settings:vSettings,card:()=>vCard(v.id),cardEdit:()=>vCardEdit(v.id),plan:()=>vPlan(v.id)}[v.name])();
+  if(v.name==='library')renderGrid();
+  if(v.name==='cardEdit')renderEditParts();
+}
+
+/* ========== 操作 ========== */
+const ACT={
+  tab:el=>{edit=null;stack=[{name:el.dataset.tab}];render();window.scrollTo(0,0);},
+  back,
+  a2hsClose:()=>{sessionStorage.setItem('a2hs','1');render();},
+  open:(el,e)=>{e.preventDefault();ACT.closeModal();go({name:'card',id:el.dataset.id});},
+  newCard:()=>{edit=null;go({name:'cardEdit',id:null});},
+  editCard:el=>{edit=null;go({name:'cardEdit',id:el.dataset.id});},
+  cancelEdit:()=>{edit=null;back();},
+  fav:el=>{const c=card(el.dataset.id);c.fav=!c.fav;saveCard(c);render();},
+  dupCard:el=>{const c=card(el.dataset.id),n=normCard({...c,id:uid(),name:c.name+'（コピー）',images:[...c.images],opIds:[],fav:false,created:Date.now()});
+    S.cards.push(n);saveCard(n);edit=null;go({name:'cardEdit',id:n.id});toast('複製しました。発展形として書きかえられます');},
+  delCard:el=>{const c=card(el.dataset.id);if(!confirm(`「${c.name}」を削除しますか？`))return;
+    S.cards=S.cards.filter(x=>x!==c);dbDel('cards',c.id);back();toast('削除しました');},
+  rmImg:el=>{edit.images.splice(+el.dataset.i,1);renderEditParts();},
+  rmOp:el=>{edit.opIds=edit.opIds.filter(x=>x!==el.dataset.id);renderEditParts();},
+  addToPlan:el=>renderAddToPlan(el.dataset.id),
+  addToNew:el=>{const p=newPlan();S.plans.push(p);putIntoPlan(p,card(el.dataset.id));ACT.closeModal();go({name:'plan',id:p.id});toast('あたらしい計画に入れました');},
+  addToThis:el=>{const p=plan(el.dataset.pid);putIntoPlan(p,card(el.dataset.id));ACT.closeModal();go({name:'plan',id:p.id});toast('計画に入れました');},
+  closeModal:()=>{$('#modal').classList.remove('on');picker=null;},
+  newPlan:()=>{const p=newPlan();S.plans.push(p);savePlan(p);go({name:'plan',id:p.id});},
+  openPlan:el=>go({name:'plan',id:el.dataset.id}),
+  planAuto:()=>autoFill(curPlan()),
+  planPrint:el=>printPlan(curPlan(),el.dataset.mode),
+  planDup:()=>{const p=curPlan(),n=normPlan({...p,id:uid(),date:today(),title:p.template?'':p.title&&p.title+'（コピー）',template:false,review:'',slots:p.slots.map(s=>({...s,id:uid()})),created:Date.now()});
+    S.plans.push(n);savePlan(n);stack.pop();go({name:'plan',id:n.id});toast('計画を作りました');},
+  planTpl:()=>{const p=curPlan();p.template=!p.template;savePlan(p);render();toast(p.template?'ひな型にしました':'ふつうの計画にもどしました');},
+  planDel:()=>{const p=curPlan();if(!confirm(`「${planTitle(p)}」を削除しますか？`))return;S.plans=S.plans.filter(x=>x!==p);dbDel('plans',p.id);back();toast('削除しました');},
+  slotAdd:el=>{const p=curPlan();p.slots.push({id:uid(),cat:el.dataset.cat,cardId:null,minutes:null,memo:''});savePlan(p);render();},
+  slotDel:el=>{const p=curPlan(),s=slotOf(el);if(card(s.cardId)&&!confirm('この枠を消しますか？'))return;p.slots=p.slots.filter(x=>x!==s);savePlan(p);render();},
+  slotUp:el=>{const p=curPlan(),i=p.slots.indexOf(slotOf(el));if(i>0){[p.slots[i-1],p.slots[i]]=[p.slots[i],p.slots[i-1]];savePlan(p);render();}},
+  slotDown:el=>{const p=curPlan(),i=p.slots.indexOf(slotOf(el));if(i<p.slots.length-1){[p.slots[i+1],p.slots[i]]=[p.slots[i],p.slots[i+1]];savePlan(p);render();}},
+  pick:el=>{const p=curPlan();picker={planId:p.id,slotId:slotOf(el).id,theme:true,age:true,players:true,q:''};renderPicker();$('#modal').classList.add('on');},
+  unpick:el=>{const p=curPlan();slotOf(el).cardId=null;savePlan(p);render();},
+  choose:el=>{const p=plan(picker.planId),s=p.slots.find(x=>x.id===picker.slotId);s.cardId=el.dataset.id;savePlan(p);ACT.closeModal();render();},
+  export:exportData,
+  themeAdd:()=>{const v=$('#themeAdd').value.trim();if(!v)return;if(S.themes.some(t=>t.name===v)){toast('同じテーマがすでにあります');return;}
+    S.themes.push({group:'じぶんのテーマ',name:v});saveThemes();render();},
+  themeDel:el=>{S.themes=S.themes.filter(t=>t.name!==el.dataset.name);saveThemes();render();},
+  reseed:async()=>{await putSeed();render();toast('お手本を入れました');}
+};
+document.addEventListener('click',e=>{
+  if(e.target.id==='modal'){ACT.closeModal();return;}
+  const el=e.target.closest('[data-act]');if(!el||el.disabled)return;
+  const fn=ACT[el.dataset.act];if(fn)fn(el,e);
+});
+document.addEventListener('submit',e=>{if(e.target.id==='cardForm'){e.preventDefault();submitCard(e.target);}});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.ff){const k=t.dataset.ff;
+    if(k==='cat'){F.cat=t.checked?t.value:'';$$('[data-ff=cat]').forEach(x=>{if(x!==t)x.checked=false;});}
+    else if(k==='fav')F.fav=t.checked;else F[k]=t.value;
+    renderGrid();return;}
+  if(t.dataset.pk&&picker){const k=t.dataset.pk;if(k==='q'){picker.q=t.value;const pos=t.selectionStart;renderPicker();const q=$('[data-pk=q]');q.focus();q.setSelectionRange(pos,pos);}else{picker[k]=t.checked;renderPicker();}return;}
+  if(t.dataset.pf){const p=curPlan(),k=t.dataset.pf;p[k]=(k==='players'||k==='totalMin')?num(t.value):t.value;savePlan(p);
+    if(k==='totalMin')$('#total').outerHTML=totalHTML(p);return;}
+  if(t.dataset.sf){const p=curPlan(),s=slotOf(t),k=t.dataset.sf;s[k]=k==='minutes'?num(t.value):t.value;savePlan(p);
+    if(k==='minutes')$('#total').outerHTML=totalHTML(p);return;}
+});
+document.addEventListener('change',async e=>{
+  const t=e.target;
+  if(t.id==='imgIn'){for(const f of t.files){try{edit.images.push(await shrink(f));}catch(err){toast(err.message);}}t.value='';renderEditParts();}
+  if(t.id==='opAdd'&&t.value){if(!edit.opIds.includes(t.value))edit.opIds.push(t.value);t.value='';renderEditParts();}
+  if(t.id==='importIn'&&t.files[0]){await importData(await t.files[0].text());t.value='';}
+});
+window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
+
+/* ========== 起動 ========== */
+(async()=>{
+  try{
+    db=await openDB();
+    S.cards=(await dbAll('cards')).map(normCard);
+    S.plans=(await dbAll('plans')).map(normPlan);
+    const meta=await dbAll('meta'), get=k=>(meta.find(m=>m.key===k)||{}).value;
+    S.themes=get('themes')||DEFAULT_THEMES.map(t=>({...t}));
+    if(!get('seeded')){await putSeed();await dbPut('meta',{key:'seeded',value:1});await saveThemes();}
+    if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+  }catch(err){console.error(err);$('#main').innerHTML='<div class="empty">データの保存場所をひらけませんでした。プライベートブラウズを切って、もう一度ひらいてください。</div>';return;}
+  render();
+  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
