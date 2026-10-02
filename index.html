@@ -142,6 +142,7 @@ a{color:var(--green)}
 #bpick{position:absolute;inset:0;background:var(--bg);overflow:auto;padding:4px 12px 16px;display:none}
 #bpick.on{display:block}
 #bpick h3{margin:6px 0 10px}
+.tag{display:inline-block;padding:2px 10px;border-radius:999px;background:#1f6f3d;color:#fff;font-size:12px;font-weight:700}
 .pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .picktile{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px;font-size:14px;font-weight:700;display:flex;flex-direction:column;gap:6px;align-items:center}
 .picktile svg{width:100%;border:1px solid var(--line);border-radius:6px;pointer-events:none}
@@ -257,7 +258,7 @@ function normPlan(o){
   return {id:o.id||uid(),date:String(o.date||today()),title:String(o.title||''),theme:String(o.theme||''),age:String(o.age||''),
     players:num(o.players),totalMin:num(o.totalMin),
     slots:(Array.isArray(o.slots)?o.slots:[]).map(s=>({id:s.id||uid(),cat:CATS.some(c=>c.id===s.cat)?s.cat:'tr1',cardId:s.cardId||null,minutes:num(s.minutes),memo:String(s.memo||''),rating:[1,2,3].includes(+s.rating)?+s.rating:0,result:String(s.result||'')})),
-    review:String(o.review||''),template:!!o.template,done:!!o.done,created:o.created||Date.now(),updated:o.updated||Date.now()};
+    review:String(o.review||''),template:!!o.template,draftTpl:!!o.draftTpl&&!o.template,done:!!o.done,created:o.created||Date.now(),updated:o.updated||Date.now()};
 }
 const saveCard=c=>{c.updated=Date.now();return dbPut('cards',c);};
 const savePlan=p=>{p.updated=Date.now();return dbPut('plans',p);};
@@ -2313,6 +2314,54 @@ function pack10Data(P,I,T,L){
   return {cards,figs,plans};
 }
 
+/* ========== 練習集 第10弾（2026-10追加・7枚） ========== */
+// 2017年度 JFAトレセン大阪 女子U-18 のトレーニングプランをもとにした7枚。すでに入れた練習と同じものは省いた。
+// 文章は要点の言いかえ、図は描きおこし。資料にある個人名・学校名は入れない。
+function pack11Data(P,I,T,L){
+  const s={type:'jfa',title:'2017 JFAトレセン大阪 女子U-18 トレーニングプラン',url:'http://ofatec-youth-news.cocolog-nifty.com/blog/files/jfa_tc_tr_plan_gu18_2018.pdf'};
+  const box=(x1,y1,x2,y2)=>[L('line',x1,y1,x2,y1),L('line',x2,y1,x2,y2),L('line',x2,y2,x1,y2),L('line',x1,y2,x1,y1)];
+  const H=['U-18'],G=(x,y)=>P('G',x,y,180),GL=P('G',95,350,90),GR=P('G',905,350,270);
+  const cards=[
+    {id:'p11-o1',src:s,ages:H,name:'5対5（中で3対3・奪ったらとなりのコートへ）',cats:['tr1'],themes:['ポゼッション','守→攻'],minP:10,maxP:10,size:'15m×30m（まん中で2つに分ける）',equip:['ボール','マーカー','ビブス'],opIds:['p6-o13'],
+     method:'片方のコートで、3人がボールを保持する。相手の3人が奪いに行く\n奪ったら、となりのコートで待つ味方へパスをする\nとなりのコートへは、1人ずつ入る\n1セット1分30秒くらいで、くり返す',
+     keys:'攻守の切りかえ\n受け手の準備、タイミング\nパスの質\n視野の確保\nボールの置きどころ',notes:'資料は印刷が切れていて、ルールの一部が読みとれない。ここに書いたのは読めた部分だけ'},
+    {id:'p11-o2',src:s,ages:H,name:'6対4のポゼッション（4人はコーンゴールへ）',cats:['tr2'],themes:['ポゼッション','攻→守'],minP:10,maxP:10,size:'20m×30m（両はしにコーンゴール）',equip:['ボール','コーン','マーカー','ビブス'],
+     method:'6人のグループは、2タッチ以下でボールを保持する\n4人のグループは、奪ったらフリータッチ（ドリブルもあり）でコーンゴールを目指す',
+     keys:'ボールを失わない\n攻守の切りかえ\n予測、コミュニケーション\nパスの出し手と受け手のタイミング\n観る、観ておく'},
+    {id:'p11-o3',src:s,ages:H,name:'2対1＋GK → 3対2＋GK（攻撃が交互に変わる）',cats:['tr1'],themes:['ゴール前の攻防','ゴールを奪う（シュート）'],gk:true,minutes:25,size:'25m×35m（ゴール2つ）',equip:['ボール','ゴール','マーカー','ビブス'],opIds:['p9-m16'],
+     method:'コーチがボールを配球してスタート\n攻撃は、交互に入れかわる\n攻撃側の選手が1人加わって、3対2を作る',
+     keys:'攻撃：シュートの意識（ゴールへ向かう）／ボールを持っていない時の動き／数的優位を生かす体の向きと、ボールの置きどころ\n守備：GKとの連携／シュートを打たせない／コースを限定する',notes:'シュートを打てる所にボールを置けているかを観る'},
+    {id:'p11-o4',src:s,ages:H,name:'リフティング → ロングキック（グリッドからグリッドへ）',cats:['wup'],themes:['ロングキック','ボールフィーリング'],minP:2,minutes:15,size:'リフティングは20m×20m。ロングキックは5.5m四方のグリッドを約30mはなして置く',equip:['ボール','コーン','マーカー'],opIds:['p8-d12'],
+     method:'① リフティング（5分）：左右の足で。次に、頭より高く上げる（左右）\n② ロングキック（10分）：向こう側のグリッドにいる相手へ蹴る。左右の足で',
+     keys:'コントロールの質\nキックの質、種類\nボールをしっかりとらえる'},
+    {id:'p11-o5',src:s,ages:H,name:'シュートドリル（ワンタッチシュート／プルアウェイ・ダイアゴナル）',cats:['tr1'],themes:['ゴールを奪う（シュート）'],gk:true,minutes:25,size:'ペナルティエリアの手前（コーンは8m、スタートは12m手前が目安）',equip:['ボール','ゴール','コーン','マーカー'],opIds:['seed-ntc04-3'],
+     method:'出し手が持ち出して、前の選手へパス\n① ワンタッチシュート\n② プルアウェイ、またはダイアゴナルランで受けてシュート',
+     keys:'パス、コントロールの質（ボールの置きどころ）\nシュートチャンスを逃さない（足の振り、ボールをしっかりとらえる）\nコントロールからシュートを早く（ゴールのイメージ）\nマークを外す、強いアクション\nリバウンドの意識',notes:'ボールを受けるタイミングが早くなりやすい。マークを外す強いアクションを求める'},
+    {id:'p11-o6',src:s,ages:H,name:'6対5＋GK（守備のスライド）',cats:['tr2'],themes:['チャレンジ＆カバー','ゴールを守る'],minP:13,maxP:13,gk:true,size:'40m×40m（ゴール2つ）',equip:['ボール','ゴール','コーン','マーカー','ビブス'],opIds:['p5-d4'],
+     method:'コーチの配球でスタート\n6対5で、2つのゴールを攻め合う\n人数の少ない側は、スライドして守る',
+     keys:'観ておく、観ながら、ポジショニング、アプローチ\n予測、コミュニケーション\nねばり強い守備\n攻守の切りかえ\nGKとの連携\n1stDF・2ndDFの決定。チャレンジの優先順位',notes:'守備のスライドや2ラインを直すだけで終わらせず、意図を持ってボールを奪う場面を作る'},
+    {id:'p11-o7',src:s,ages:H,name:'ハンドボールゲーム（マークの原則）',cats:['wup'],themes:['ボールを奪う','コーディネーション'],minP:10,minutes:5,size:'20m×20m',equip:['ボール','マーカー','ビブス'],opIds:['p5-f10'],
+     method:'グリッドの中で、手でパスをつなぐゲームをする\n3分くらいで区切る',
+     keys:'マークの基本原則\nインターセプトをねらう\nポジショニング、予測',notes:'雨の日に、守備のテーマのウォーミングアップとして行われたメニュー。細かいルールは資料にない'}
+  ];
+  const figs={
+    'p11-o1':[{field:'blank',items:[...box(160,200,840,500),L('line',500,200,500,500),P('w',240,260,90),P('w',260,440,90),P('w',400,340,270),I('ball',266,274),P('b',320,280,270),P('b',340,420,270),P('b',440,400,270),P('w',660,280,270),P('w',680,430,270),P('b',740,350,270),L('pass',346,400,650,286),
+      T('15m×30m',500,150),T('奪ったらとなりのコートへ。1人ずつ入る',500,560),T('1セット1分30秒',500,620)]}],
+    'p11-o2':[{field:'blank',items:[...box(180,160,820,540),I('cone',180,310),I('cone',180,390),I('cone',820,310),I('cone',820,390),P('w',240,220,135),P('w',760,220,225),P('w',240,480,45),P('w',760,480,315),P('w',420,350,90),P('w',600,300,270),I('ball',266,236),P('b',340,300,270),P('b',500,260,180),P('b',520,430,0),P('b',660,400,90),
+      L('pass',260,230,410,340),T('20m×30m',500,110),T('6人は2タッチ以下。4人は奪ったらコーンゴールへ',500,600)]}],
+    'p11-o3':[{field:'full',items:[GL,GR,P('C',500,660,0),I('ball',530,654),L('pass',494,646,330,300),P('w',320,280,90),P('w',320,440,90),P('b',600,350,270),P('w',180,160,90),P('w',180,540,90),P('b',820,160,270),P('b',820,540,270),L('run',196,160,400,200),
+      T('攻撃は交互に入れかわる',500,30),T('1人加わって3対2',300,120),T('25m×35m',760,640)]}],
+    'p11-o4':[{field:'blank',items:[...box(120,280,240,400),...box(760,280,880,400),P('w',180,340,90),I('ball',206,354),P('w',820,340,270),L('pass',200,330,800,330,500,160),L('pass',800,360,204,360,500,520),T('約30m',500,340),T('5.5m四方',180,450),T('5.5m四方',820,450),T('① リフティング（左右・頭より高く）',500,90),T('② ロングキック（左右）',500,610)]}],
+    'p11-o5':[{field:'goal',items:[G(500,125),I('cone',440,450),I('cone',560,450),I('cone',320,560),I('cone',680,560),P('w',420,480,0),P('w',600,480,315),P('w',260,640,45),I('ball',286,628),P('w',740,640,315),L('drib',270,620,340,580),L('pass',350,570,432,494),L('pass',430,462,470,112),L('run',610,462,660,360,690,440),
+      T('① ワンタッチシュート',200,480),T('② プルアウェイ・ダイアゴナル',740,400),T('8m',500,500),T('12m',160,560)]}],
+    'p11-o6':[{field:'goal',items:[G(500,125),I('cone',160,400),I('cone',840,400),L('line',160,400,840,400),P('C',100,400,90),I('ball',126,388),L('pass',132,384,486,150),P('w',260,300,90),P('w',300,220,180),P('w',700,220,180),P('w',760,300,270),P('w',420,340,0),P('w',600,340,0),P('b',340,290,0),P('b',480,250,0),P('b',640,280,0),P('b',420,400,0),P('b',600,400,0),P('G',500,640,0),
+      T('40m×40m',860,560),T('6対5。少ない側はスライドして守る',400,560)]}],
+    'p11-o7':[{field:'blank',items:[...box(260,110,740,590),P('w',320,180,135),P('w',600,170,225),P('w',680,360,270),P('w',440,430,0),P('w',340,520,45),I('ball',346,196),P('b',400,240,315),P('b',560,240,45),P('b',600,400,180),P('b',480,360,180),P('b',300,440,90),L('pass',340,190,584,174),
+      T('20m×20m',500,70),T('手でパス。インターセプトをねらう',500,640)]}]
+  };
+  return {cards,figs,plans:[]};
+}
+
 /* ========== お手本カード ========== */
 function seedData(){
   const src={type:'jfa',title:'JFA 2016 U-12NTC 04 実技④ ゴールを奪う',url:'https://www.jfa.jp/youth_development/national_tracen/pdf/ntc_u12_menu_04.pdf'};
@@ -2366,8 +2415,8 @@ function seedData(){
     'seed-ntc04-5':[{field:'goal',items:[P('G',500,125,180),P('w',330,490,150),P('w',500,455,180),P('w',670,490,210),P('b',350,425,180),P('b',500,390,180),P('b',650,425,180),P('S',500,610,0),I('ball',535,600),L('pass',486,596,344,510),T('25m×29m',820,660)]}],
     'seed-ntc04-6':[{field:'full',items:[P('G',95,350,90),P('G',905,350,270),P('w',260,220,90),P('w',260,480,90),P('w',400,300,90),P('w',430,430,90),P('b',740,220,270),P('b',740,480,270),P('b',600,280,270),P('b',580,430,270),P('F',500,350,90),I('ball',455,416),T('45m×29m',500,672)]}]
   };
-  const pk=packData(P,I,T,L),pk3=pack3Data(P,I,T,L),pk4=pack4Data(P,I,T,L),pk5=pack5Data(P,I,T,L),pk6=pack6Data(P,I,T,L),pk7=pack7Data(P,I,T,L),pk8=pack8Data(P,I,T,L),pk9=pack9Data(P,I,T,L),pk10=pack10Data(P,I,T,L);
-  c.push(...pk.cards,...pk3.cards,...pk4.cards,...pk5.cards,...pk6.cards,...pk7.cards,...pk8.cards,...pk9.cards,...pk10.cards);Object.assign(figs,pk.figs,pk3.figs,pk4.figs,pk5.figs,pk6.figs,pk7.figs,pk8.figs,pk9.figs,pk10.figs);pk.plans.push(...pk3.plans,...pk4.plans,...pk5.plans,...pk6.plans,...pk7.plans,...pk8.plans,...pk9.plans,...pk10.plans);
+  const pk=packData(P,I,T,L),pk3=pack3Data(P,I,T,L),pk4=pack4Data(P,I,T,L),pk5=pack5Data(P,I,T,L),pk6=pack6Data(P,I,T,L),pk7=pack7Data(P,I,T,L),pk8=pack8Data(P,I,T,L),pk9=pack9Data(P,I,T,L),pk10=pack10Data(P,I,T,L),pk11=pack11Data(P,I,T,L);
+  c.push(...pk.cards,...pk3.cards,...pk4.cards,...pk5.cards,...pk6.cards,...pk7.cards,...pk8.cards,...pk9.cards,...pk10.cards,...pk11.cards);Object.assign(figs,pk.figs,pk3.figs,pk4.figs,pk5.figs,pk6.figs,pk7.figs,pk8.figs,pk9.figs,pk10.figs,pk11.figs);pk.plans.push(...pk3.plans,...pk4.plans,...pk5.plans,...pk6.plans,...pk7.plans,...pk8.plans,...pk9.plans,...pk10.plans,...pk11.plans);
   const cards=c.map(x=>normCard({...base,...x,images:(figs[x.id]||[]).map(board=>({board}))}));
   const packPlans=pk.plans.map(normPlan);
   const p=normPlan({id:'seed-plan-ntc04',title:'ゴールを奪う（お手本）',theme:th[0],age:'U-12',template:true,
@@ -2799,12 +2848,15 @@ function bUp(){
 /* ========== 計画 ========== */
 function vPlans(){
   const row=p=>{const names=p.slots.map(s=>card(s.cardId)).filter(Boolean).map(c=>c.name);
-    return `<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(planTitle(p))}</b><span class="meta">${esc([p.template?'':p.date,p.done?'実施ずみ':'',p.theme,p.age,names.length?`${names.length}メニュー`:'メニュー未選択'].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`;};
-  const ps=S.plans.filter(p=>!p.template).sort((a,b)=>b.date.localeCompare(a.date)||b.updated-a.updated);
-  const ts=S.plans.filter(p=>p.template);
+    return `<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(planTitle(p))}</b><span class="meta">${esc([p.draftTpl?'作成中':p.template?'':p.date,p.done?'実施ずみ':'',p.theme,p.age,names.length?`${names.length}メニュー`:'メニュー未選択'].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`;};
+  const ps=S.plans.filter(p=>!p.template&&!p.draftTpl).sort((a,b)=>b.date.localeCompare(a.date)||b.updated-a.updated);
+  const mine=S.plans.filter(p=>p.draftTpl||(p.template&&!builtinPlan(p))).sort((a,b)=>b.updated-a.updated);
+  const ts=S.plans.filter(p=>p.template&&builtinPlan(p));
   return `<div class="bar"><button class="btn pri" data-act="newPlan">＋ 今日のトレーニングを作る</button></div>
   <h3>計画</h3>${ps.length?ps.map(row).join(''):'<div class="empty">計画はまだありません。</div>'}
-  <h3>ひな型</h3><p class="meta">ひな型は書きかえられません。開いて「コピーして計画を作る」を押すと、編集できる計画になります。</p>${ts.length?ts.map(row).join(''):'<p class="meta">計画を「ひな型にする」と、ここに並びます。</p>'}`;
+  <div class="bar"><h3 style="margin:0">じぶんのひな型</h3><span class="grow"></span><button class="btn sm" data-act="newTpl">＋ ひな型を作る</button></div>
+  ${mine.length?mine.map(row).join(''):'<p class="meta">じぶんで作ったひな型が、ここに並びます。</p>'}
+  <h3>はじめから入っているひな型</h3><p class="meta">書きかえられません。開いて「コピーして計画を作る」を押すと、編集できる計画になります。</p>${ts.map(row).join('')}`;
 }
 function slotLabel(p,s){const same=p.slots.filter(x=>x.cat===s.cat);return catLabel(s.cat)+(same.length>1?` ${same.indexOf(s)+1}`:'');}
 function totalHTML(p){
@@ -2818,8 +2870,9 @@ function vPlan(id){
   if(p.template)return vTemplate(p);
   return `<div class="bar"><button class="btn ghost" data-act="back">‹ もどる</button><span class="grow"></span>
     <button class="btn sm" data-act="planPrint" data-mode="list">印刷（一覧版）</button><button class="btn sm" data-act="planPrint" data-mode="detail">印刷（詳細版）</button></div>
+  ${p.draftTpl?`<div class="panel"><p style="margin:0 0 10px"><span class="tag">じぶんのひな型（作成中）</span>　タイトルとメニューを入れたら、「ひな型として保存する」を押してください。保存すると書きかえられなくなります（あとで「編集する」で直せます）。</p><button class="btn pri" data-act="planTpl">ひな型として保存する</button></div>`:''}
   <div class="panel"><div class="grid2">
-    <label class="f"><span>日付</span><input type="date" data-pf="date" value="${esc(p.date)}"></label>
+    ${p.draftTpl?'':`<label class="f"><span>日付</span><input type="date" data-pf="date" value="${esc(p.date)}"></label>`}
     <label class="f"><span>タイトル</span><input type="text" data-pf="title" value="${esc(p.title)}" placeholder="${esc(planTitle({...p,title:''}))}"></label>
     <label class="f"><span>テーマ（目的）</span><select data-pf="theme">${themeOptions(p.theme,'きめない')}</select></label>
     <label class="f"><span>対象</span><select data-pf="age">${opt(AGES.map(a=>[a,a]),p.age,'きめない')}</select></label>
@@ -2838,10 +2891,10 @@ function vPlan(id){
     ${p.done&&c?`<div class="rate"><span class="meta">できばえ</span>${[3,2,1].map(v=>`<button class="btn sm${s.rating===v?' pri':''}" data-act="rate" data-v="${v}">${RATE[v]}</button>`).join('')}<input type="text" data-sf="result" value="${esc(s.result)}" placeholder="やってみてどうだったか"></div>`:''}
   </div>`;}).join('')}
   <div class="bar"><span class="meta">枠を追加：</span>${CATS.map(c=>`<button class="btn sm" data-act="slotAdd" data-cat="${c.id}">＋ ${c.label}</button>`).join('')}</div>
-  <div class="panel">${p.template?'':`<label class="chip" style="margin-bottom:10px"><input type="checkbox" data-pf="done"${p.done?' checked':''}><span>この練習を実施した</span></label>
+  ${p.draftTpl?'':`<div class="panel">${p.template?'':`<label class="chip" style="margin-bottom:10px"><input type="checkbox" data-pf="done"${p.done?' checked':''}><span>この練習を実施した</span></label>
     <p class="hint" style="margin:0 0 10px">チェックすると、各メニューに「できばえ」を付けられます。記録はカードに残り、次の「おまかせ」に活かされます。</p>`}
-    <label class="f" style="margin:0"><span>ふりかえり（実施後の記録）</span><textarea data-pf="review" placeholder="うまくいったこと、次回なおすこと">${esc(p.review)}</textarea></label></div>
-  <div class="bar"><button class="btn" data-act="planDup">複製する</button><button class="btn" data-act="planTpl">ひな型にする</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`;
+    <label class="f" style="margin:0"><span>ふりかえり（実施後の記録）</span><textarea data-pf="review" placeholder="うまくいったこと、次回なおすこと">${esc(p.review)}</textarea></label></div>`}
+  <div class="bar">${p.draftTpl?'<button class="btn pri" data-act="planTpl">ひな型として保存する</button>':'<button class="btn" data-act="planDup">複製する</button><button class="btn" data-act="planTpl">ひな型にする</button>'}<span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`;
 }
 // ひな型は書きかえられない。変えたい時は、コピーして計画にしてから編集する
 const builtinPlan=p=>String(p.id).startsWith('seed-plan');
@@ -2850,15 +2903,16 @@ function vTemplate(p){
   return `<div class="bar"><button class="btn ghost" data-act="back">‹ もどる</button><span class="grow"></span>
     <button class="btn sm" data-act="planPrint" data-mode="list">印刷（一覧版）</button><button class="btn sm" data-act="planPrint" data-mode="detail">印刷（詳細版）</button></div>
   <h2 style="margin:6px 0">${esc(planTitle(p))}</h2>
+  <p style="margin:0 0 4px"><span class="tag">${builtinPlan(p)?'はじめから入っているひな型':'じぶんのひな型'}</span></p>
   <p class="meta">${esc(info)}</p>
-  <div class="panel"><p style="margin:0 0 10px"><b>これは「ひな型」です。</b>ひな型は書きかえられません。使う時や、中身を変えたい時は、コピーして計画にしてから編集します。</p>
+  <div class="panel"><p style="margin:0 0 10px"><b>これは「ひな型」です。</b>ひな型は書きかえられません。使う時は、コピーして計画にしてから編集します。${builtinPlan(p)?'':'ひな型そのものを直したい時は、下の「編集する」を押します。'}</p>
     <button class="btn pri" data-act="planDup">コピーして計画を作る</button></div>
   <h3>メニュー</h3>
   ${p.slots.map(s=>{const c=card(s.cardId);return `<div class="slot s-${s.cat}"><div class="slot-h"><span class="name">${esc(slotLabel(p,s))}</span><span class="grow"></span>${slotMin(s)!=null?`<span class="meta">${slotMin(s)}分</span>`:''}</div>
     ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div></div>`:'<p class="meta">カードは入っていません</p>'}
     ${s.memo?`<p class="meta">メモ：${esc(s.memo)}</p>`:''}</div>`;}).join('')}
   ${builtinPlan(p)?'<p class="hint">はじめから入っているひな型は、消したり、ひな型をやめたりできません。</p>'
-    :`<div class="bar"><button class="btn" data-act="planTpl">ひな型をやめる（計画にもどして編集する）</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`}`;
+    :`<div class="bar"><button class="btn" data-act="planTpl">編集する</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`}`;
 }
 const curPlan=()=>plan(view().id);
 const slotOf=el=>{const p=curPlan(),sid=el.closest('[data-sid]').dataset.sid;return p.slots.find(s=>s.id===sid);};
@@ -2934,7 +2988,7 @@ const newPlan=()=>normPlan({age:'U-12',slots:CATS.map(c=>({cat:c.id}))});
 
 /* ========== 印刷 ========== */
 function printPlan(p,mode){
-  const info=[p.template?'':p.date,p.theme?`テーマ：${p.theme}`:'',p.age?`対象：${p.age}`:'',p.players!=null?`${p.players}人`:'',`合計 ${p.slots.reduce((a,s)=>a+(slotMin(s)||0),0)}分`].filter(Boolean).join('　');
+  const info=[p.template||p.draftTpl?'':p.date,p.theme?`テーマ：${p.theme}`:'',p.age?`対象：${p.age}`:'',p.players!=null?`${p.players}人`:'',`合計 ${p.slots.reduce((a,s)=>a+(slotMin(s)||0),0)}分`].filter(Boolean).join('　');
   const rows=p.slots.map(s=>{const c=card(s.cardId),m=slotMin(s);return `<tr><td style="white-space:nowrap"><b>${esc(slotLabel(p,s))}</b></td><td style="white-space:nowrap">${m!=null?m+'分':''}</td>
     <td>${c?`<b>${esc(c.name)}</b>${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}`:''}</td>
     <td>${c?`${esc([c.size,c.equip.join('、')].filter(Boolean).join(' ／ '))}${mode==='list'?ul(c.method):''}`:''}</td>
@@ -3047,9 +3101,14 @@ const ACT={
     for(const c of pick){await ensureThemes(c.themes);S.cards.push(c);await saveCard(c);}
     scanDraft=null;ACT.closeModal();edit=null;stack=[{name:'library'}];render();toast(`${pick.length}枚を登録しました。内容を確認してください`);},
   planPrint:el=>printPlan(curPlan(),el.dataset.mode),
-  planDup:()=>{const p=curPlan(),n=normPlan({...p,id:uid(),date:today(),title:p.template?'':p.title&&p.title+'（コピー）',template:false,review:'',slots:p.slots.map(s=>({...s,id:uid()})),created:Date.now()});
+  planDup:()=>{const p=curPlan(),n=normPlan({...p,id:uid(),date:today(),title:p.template?'':p.title&&p.title+'（コピー）',template:false,draftTpl:false,review:'',slots:p.slots.map(s=>({...s,id:uid()})),created:Date.now()});
     S.plans.push(n);savePlan(n);stack.pop();go({name:'plan',id:n.id});toast('計画を作りました');},
-  planTpl:()=>{const p=curPlan();if(p.template&&builtinPlan(p))return;if(!p.template&&!confirm('ひな型にすると、書きかえられなくなります。ひな型にしますか？'))return;p.template=!p.template;savePlan(p);render();toast(p.template?'ひな型にしました':'ふつうの計画にもどしました');},
+  planTpl:()=>{const p=curPlan();if(p.template&&builtinPlan(p))return;
+    if(p.template){p.template=false;p.draftTpl=true;savePlan(p);render();toast('編集できるようにしました');return;}
+    if(!p.draftTpl&&!confirm('ひな型にすると、計画の一覧からひな型の一覧へ移り、書きかえられなくなります。ひな型にしますか？'))return;
+    if(!p.title){toast('タイトルを入れてください');const el=document.querySelector('[data-pf="title"]');if(el)el.focus();return;}
+    p.template=true;p.draftTpl=false;p.done=false;p.review='';for(const x of p.slots){x.rating=0;x.result='';}savePlan(p);render();toast('じぶんのひな型として保存しました');},
+  newTpl:()=>{const p=newPlan();p.draftTpl=true;S.plans.push(p);savePlan(p);go({name:'plan',id:p.id});},
   planDel:()=>{const p=curPlan();if(p.template&&builtinPlan(p))return;if(!confirm(`「${planTitle(p)}」を削除しますか？`))return;S.plans=S.plans.filter(x=>x!==p);dbDel('plans',p.id);back();toast('削除しました');},
   slotAdd:el=>{const p=curPlan();p.slots.push({id:uid(),cat:el.dataset.cat,cardId:null,minutes:null,memo:''});savePlan(p);render();},
   slotDel:el=>{const p=curPlan(),s=slotOf(el);if(card(s.cardId)&&!confirm('この枠を消しますか？'))return;p.slots=p.slots.filter(x=>x!==s);savePlan(p);render();},
@@ -3106,10 +3165,10 @@ window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
     else{
       if(!get('seedfig'))await addSeedFigs();
       if(!get('seedfig2'))await upgradeSeedFigs();
-      if(!get('pack2')||!get('pack3')||!get('pack4')||!get('pack5')||!get('pack6')||!get('pack7')||!get('pack8')||!get('pack9')||!get('pack10'))await putSeed(); // 追加の練習集を、集ごとに1回だけ入れる。そのあと消したカードは復活させない
+      if(!get('pack2')||!get('pack3')||!get('pack4')||!get('pack5')||!get('pack6')||!get('pack7')||!get('pack8')||!get('pack9')||!get('pack10')||!get('pack11'))await putSeed(); // 追加の練習集を、集ごとに1回だけ入れる。そのあと消したカードは復活させない
     }
     if(get('seeded')&&!get('tplfix'))await restoreSeedPlans();
-    for(const k of ['tplfix','seedfig','seedfig2','pack2','pack3','pack4','pack5','pack6','pack7','pack8','pack9','pack10']){if(!get(k))await dbPut('meta',{key:k,value:1});}
+    for(const k of ['tplfix','seedfig','seedfig2','pack2','pack3','pack4','pack5','pack6','pack7','pack8','pack9','pack10','pack11']){if(!get(k))await dbPut('meta',{key:k,value:1});}
     if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
   }catch(err){console.error(err);$('#main').innerHTML='<div class="empty">データの保存場所をひらけませんでした。プライベートブラウズを切って、もう一度ひらいてください。</div>';return;}
   render();
