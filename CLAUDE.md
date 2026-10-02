@@ -13,7 +13,8 @@
 - `manifest.webmanifest`、`icon-192.png`、`icon-512.png`、`apple-touch-icon.png`
 
 サーバーなし。データは端末内の IndexedDB（DB名 `renshu-base`、ストア `cards` / `plans` / `meta`）。
-図の画像は長辺1400pxのJPEGに縮めて、カードの `images` に data URL で持つ。
+カードの `images` は `{src, board}` の配列。写真は長辺1400pxのJPEG（data URL）で `board` は null。
+作図ボードで描いた図は `board`（`{field, items}`、座標は1000×700）が正で、`src` は `svgURL(board)` で毎回作りなおすSVG。
 
 ## データの形
 
@@ -38,6 +39,6 @@ GitHub Pages：https://konkora780-ux.github.io/renshu-base/ （konkora780-ux/ren
 ## 段階
 
 1. 済：カード登録、図鑑としぼり込み、今日のトレーニング、印刷（一覧版・詳細版）、JSONの書き出し・読みこみ、お手本カード
-2. 未：アプリ内の作図ボード
+2. 済：アプリ内の作図ボード（コート5種、選手・用具、パス／人の動き／ドリブルの線、わく、文字）。お手本6枚にも図を追加
 3. 未：写真・PDFからのよみとり、ふりかえりの活用
 4. 未：Supabaseでの共有、他競技、商用化の検討

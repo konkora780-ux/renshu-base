@@ -120,7 +120,23 @@ a{color:var(--green)}
 .imgstrip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
 .imgstrip .it{position:relative}
 .imgstrip img{height:92px;border:1px solid var(--line);border-radius:8px;display:block;background:#fff}
-.imgstrip button{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:14px;border:0;background:#222;color:#fff;padding:0}
+.imgstrip .x{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border-radius:14px;border:0;background:#222;color:#fff;padding:0}
+.imgstrip .re{position:absolute;left:4px;bottom:4px;border:0;border-radius:8px;background:var(--green);color:#fff;font-size:12px;font-weight:700;padding:4px 8px}
+/* 作図ボード */
+#board{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column}
+#board.on{display:flex}
+.b-top{background:var(--green);color:#fff;display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px}
+.b-top b{flex:1;text-align:center}
+.b-top .btn{color:var(--ink)}
+.b-tools{display:flex;flex-wrap:wrap;gap:6px;padding:8px;align-items:stretch}
+@media(max-width:640px){.b-tools{flex-wrap:nowrap;overflow-x:auto}}
+.b-tools select{width:auto;min-height:52px;flex:none}
+.tool{flex:none;border:1px solid var(--line);background:#fff;border-radius:10px;min-width:60px;padding:4px 6px 3px;font-size:11px;line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.tool svg{width:30px;height:30px;pointer-events:none}
+.tool.on{border-color:var(--green);background:var(--green-l);box-shadow:inset 0 0 0 1.5px var(--green);font-weight:700}
+.b-canvas{flex:1;min-height:0;padding:0 8px}
+#bsvg{width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none}
+.b-sel{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-height:60px;padding:8px 10px calc(env(safe-area-inset-bottom) + 8px);font-size:13px;color:var(--sub)}
 #print{display:none}
 @media print{
   @page{size:A4;margin:12mm}
@@ -155,6 +171,12 @@ a{color:var(--green)}
 <div id="modal"><div class="box" id="modalBox"></div></div>
 <div id="toast"></div>
 <div id="print"></div>
+<div id="board">
+  <div class="b-top"><button class="btn sm" data-act="bCancel">やめる</button><b>図を描く</b><button class="btn sm" data-act="bUndo">もとに戻す</button><button class="btn sm" data-act="bDone" style="font-weight:700">完了</button></div>
+  <div class="b-tools" id="btools"></div>
+  <div class="b-canvas"><svg id="bsvg" viewBox="0 0 1000 700"></svg></div>
+  <div class="b-sel" id="bsel"></div>
+</div>
 
 <script>
 'use strict';
@@ -216,7 +238,8 @@ function normCard(o){
     cats:arr(o.cats).filter(c=>CATS.some(x=>x.id===c)),themes:arr(o.themes),ages:arr(o.ages),
     minP:num(o.minP),maxP:num(o.maxP),gk:!!o.gk,minutes:num(o.minutes),size:String(o.size||''),equip:arr(o.equip),
     method:txt(o.method),keys:txt(o.keys),steps:txt(o.steps),notes:txt(o.notes),gkPoints:txt(o.gkPoints),
-    images:(Array.isArray(o.images)?o.images:[]).filter(safeImg),opIds:arr(o.opIds),
+    images:(Array.isArray(o.images)?o.images:[]).map(x=>typeof x==='string'?{src:x,board:null}:{src:String(x&&x.src||''),board:x&&x.board?normBoard(x.board):null})
+      .map(x=>x.board?{src:svgURL(x.board),board:x.board}:x).filter(x=>safeImg(x.src)),opIds:arr(o.opIds),
     src:{type:SRC[src.type]?src.type:'own',title:String(src.title||''),url:String(src.url||'')},
     memo:txt(o.memo),fav:!!o.fav,share:!!o.share,created:o.created||Date.now(),updated:o.updated||Date.now()};
 }
@@ -264,10 +287,34 @@ function seedData(){
      method:'① 4対4＋フリーマン1人＋GK。アウトオブプレー後はGKから再開\nフリーマンは2タッチ以内、シュートなし\nオフサイドあり\n② 5対5＋GK',
      keys:kf4,
      gkPoints:'ボールとまわりの状況を観ながら、攻守でポジションをとり続けているか\nコーチング（1stDFの決定、オフのポジショニング、攻撃時のリスク管理）'}
-  ].map(x=>normCard({...base,...x}));
+  ];
+  // 図は資料の画像ではなく、作図ボードの形式で描きおこしたもの
+  const P=(k,x,y)=>({t:'p',k,x,y}),I=(t,x,y)=>({t,x,y}),T=(s,x,y)=>({t:'t',s,x,y}),
+    L=(k,x1,y1,x2,y2,cx,cy)=>cx==null?{t:'l',k,x1,y1,x2,y2}:{t:'l',k,x1,y1,x2,y2,cx,cy};
+  const figs={
+    'seed-ntc04-1':[{field:'blank',items:[L('line',280,110,720,110),L('line',720,110,720,550),L('line',720,550,280,550),L('line',280,550,280,110),L('line',500,110,500,550),L('line',280,330,720,330),
+      I('marker',500,110),I('marker',720,330),I('marker',500,550),I('marker',280,330),I('marker',500,330),
+      P('w',380,215),P('b',428,240),P('w',620,230),P('b',578,262),P('w',390,445),P('b',436,420),P('S',215,330),P('S',785,330),P('S',500,620),I('ball',532,606),
+      L('pass',492,598,400,468),L('run',634,246,622,430,700,340),T('12m×12m',500,70)]}],
+    'seed-ntc04-2':[{field:'goal',items:[P('G',500,125),I('marker',310,600),P('w',350,600),P('w',350,650),I('cone',350,470),L('drib',350,578,318,420,280,500),L('pass',322,400,455,112),
+      P('w',650,600),P('w',650,650),P('w',770,510),I('ball',795,496),L('pass',752,522,674,588),L('pass',662,580,748,494,690,512),L('pass',640,580,545,112),T('①',255,650),T('②',720,650)]}],
+    'seed-ntc04-3':[{field:'goal',items:[P('G',500,125),I('cone',430,450),I('cone',570,450),I('marker',565,625),P('w',300,440),L('run',300,418,345,330,250,370),
+      P('w',600,620),P('w',600,665),L('drib',600,598,575,520),L('pass',570,502,362,322),L('pass',350,305,462,112),T('③ プルアウェイ',200,640)]},
+     {field:'goal',items:[P('G',500,125),I('cone',560,430),I('marker',205,560),P('w',170,540),L('drib',170,518,130,330),L('pass',132,310,545,290,330,230),
+      P('w',640,560),P('w',640,610),L('run',640,538,575,305,650,400),L('pass',560,285,460,112),T('④ クロスから',820,640)]}],
+    'seed-ntc04-4':[{field:'goal',items:[P('G',500,125),P('w',400,480),P('w',610,455),P('b',425,415),P('b',590,390),P('S',110,500),P('S',890,500),P('S',500,610),
+      I('ball',535,600),I('ball',470,655),I('ball',500,665),I('ball',530,655),L('pass',488,592,412,500),T('20m×25m',820,660)]}],
+    'seed-ntc04-5':[{field:'goal',items:[P('G',500,125),P('w',330,490),P('w',500,455),P('w',670,490),P('b',350,425),P('b',500,390),P('b',650,425),P('S',500,610),I('ball',535,600),L('pass',486,596,344,510),T('25m×29m',820,660)]}],
+    'seed-ntc04-6':[{field:'full',items:[P('G',95,350),P('G',905,350),P('w',260,220),P('w',260,480),P('w',400,300),P('w',430,430),P('b',740,220),P('b',740,480),P('b',600,280),P('b',580,430),P('F',500,350),I('ball',455,416),T('45m×29m',500,672)]}]
+  };
+  const cards=c.map(x=>normCard({...base,...x,images:(figs[x.id]||[]).map(board=>({board}))}));
   const p=normPlan({id:'seed-plan-ntc04',title:'ゴールを奪う（お手本）',theme:th[0],age:'U-12',template:true,
     slots:[['wup','seed-ntc04-1'],['wup','seed-ntc04-2'],['tr1','seed-ntc04-3'],['tr2','seed-ntc04-4'],['game','seed-ntc04-6']].map(([cat,cardId])=>({cat,cardId}))});
-  return {cards:c,plans:[p]};
+  return {cards,plans:[p]};
+}
+// 図のなかったころのお手本カードに、図を足す（自分で図を入れたカードはさわらない）
+async function addSeedFigs(){
+  for(const s of seedData().cards){const c=card(s.id);if(c&&!c.images.length&&s.images.length){c.images=s.images;await dbPut('cards',c);}}
 }
 async function putSeed(){
   const sd=seedData();
@@ -316,7 +363,7 @@ function renderGrid(){
   const list=S.cards.filter(matchCard).sort((a,b)=>(b.fav-a.fav)||(b.updated-a.updated));
   g.innerHTML=`<p class="count">${list.length}枚 / 全${S.cards.length}枚</p>`+(list.length?`<div class="cards">${list.map(c=>`
     <button class="card" data-act="open" data-id="${esc(c.id)}">
-      <div class="thumb">${c.images[0]?`<img src="${c.images[0]}" alt="">`:PITCH}</div>
+      <div class="thumb">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:PITCH}</div>
       <div class="cbody">${badges(c)}${c.fav?'<span class="star">★</span>':''}<h3>${esc(c.name)}</h3><p class="meta">${esc(cardMeta(c))}</p></div>
     </button>`).join('')}</div>`:`<div class="empty">${S.cards.length?'条件に合うカードがありません。しぼり込みをゆるめてください。':'カードがまだありません。「＋ カード」から登録できます。'}</div>`);
 }
@@ -334,9 +381,9 @@ function sheetHTML(c){
     <div class="sheet-body">
       <h2><span class="catbig">${c.cats.map(catLabel).join(' / ')}</span>${esc(c.name)}</h2>
       <div class="cols">
-        <div class="figs">${c.images.length?c.images.map(i=>`<img src="${i}" alt="図">`).join(''):'<div class="nofig">図はまだありません</div>'}</div>
+        <div class="figs">${c.images.length?c.images.map(i=>`<img src="${i.src}" alt="図">`).join(''):'<div class="nofig">図はまだありません</div>'}</div>
         <div>
-          <h4>オーガナイズ</h4>
+          ${c.size||c.equip.length||c.method?'<h4>オーガナイズ</h4>':''}
           <dl>${c.size?`<dt>(1) 大きさ</dt><dd>${esc(c.size)}</dd>`:''}${c.equip.length?`<dt>(2) 用具</dt><dd>${esc(c.equip.join('、'))}</dd>`:''}${c.method?`<dt>(3) 方法</dt><dd>${ul(c.method)}</dd>`:''}</dl>
           ${c.keys?`<div class="keybox"><h4>キーファクター</h4>${ul(c.keys)}</div>`:''}
         </div>
@@ -385,8 +432,9 @@ function vCardEdit(id){
   </div>
   <div class="panel"><h3>図</h3>
     <div class="imgstrip" id="imgstrip"></div>
-    <label class="btn" style="display:inline-flex;align-items:center">画像・写真を追加<input type="file" id="imgIn" accept="image/*" multiple hidden></label>
-    <p class="hint">手描きの図を撮影して添付できます。1枚目が図鑑の表紙になります。</p>
+    <div class="bar" style="margin:0"><button type="button" class="btn pri" data-act="drawFig">図を描く</button>
+    <label class="btn" style="display:inline-flex;align-items:center">画像・写真を追加<input type="file" id="imgIn" accept="image/*" multiple hidden></label></div>
+    <p class="hint">「図を描く」で作った図は、あとから描きなおせます。1枚目が図鑑の表紙になります。</p>
   </div>
   <div class="panel"><h3>オーガナイズ</h3>
     <label class="f"><span>(1) 大きさ</span><input type="text" name="size" value="${esc(c.size)}" placeholder="例：12m×12m"></label>
@@ -418,7 +466,7 @@ function vCardEdit(id){
   </form>`;
 }
 function renderEditParts(){
-  const s=$('#imgstrip');if(s)s.innerHTML=edit.images.map((src,i)=>`<div class="it"><img src="${src}" alt=""><button type="button" data-act="rmImg" data-i="${i}" aria-label="この画像を外す">×</button></div>`).join('');
+  const s=$('#imgstrip');if(s)s.innerHTML=edit.images.map((im,i)=>`<div class="it"><img src="${im.src}" alt="">${im.board?`<button type="button" class="re" data-act="editBoard" data-i="${i}">描きなおす</button>`:''}<button type="button" class="x" data-act="rmImg" data-i="${i}" aria-label="この図を外す">×</button></div>`).join('');
   const o=$('#oplist');if(o)o.innerHTML=edit.opIds.map(card).filter(Boolean).map(x=>`<div class="bar" style="margin-bottom:6px"><span>${esc(x.name)}</span><span class="grow"></span><button type="button" class="btn sm" data-act="rmOp" data-id="${esc(x.id)}">外す</button></div>`).join('');
 }
 function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();
@@ -443,6 +491,159 @@ async function submitCard(form){
   await saveCard(c);edit=null;stack.pop();
   if(!old)stack.push({name:'card',id:c.id});
   render();toast('保存しました');
+}
+
+/* ========== 作図ボード ========== */
+// 図は {field, items} の形で持ち、表示・印刷のときにSVGにする。座標は 1000×700 の中。
+const BW=1000,BH=700;
+const FIELDS=[['goal','ゴール前'],['half','ハーフコート'],['full','フルコート'],['grid','グリッド'],['blank','コートなし']];
+const TOOLS=[['select','えらぶ'],['p:w','白'],['p:b','黒'],['p:S','サーバー'],['p:G','GK'],['p:F','フリー'],
+  ['ball','ボール'],['cone','コーン'],['marker','マーカー'],['goal','ゴール'],['mini','ミニゴール'],
+  ['l:pass','パス'],['l:run','人の動き'],['l:drib','ドリブル'],['l:line','線'],['r','わく'],['t','文字']];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const n1=v=>Math.round(v*10)/10;
+function normBoard(b){
+  const N=v=>{const n=Number(v);return Number.isFinite(n)?clamp(n,-200,1200):0;};
+  const items=(Array.isArray(b.items)?b.items:[]).slice(0,300).map(it=>{
+    if(!it)return null;
+    switch(it.t){
+      case 'p':return ['w','b','S','G','F'].includes(it.k)?{t:'p',k:it.k,x:N(it.x),y:N(it.y)}:null;
+      case 'ball':case 'cone':case 'marker':return {t:it.t,x:N(it.x),y:N(it.y)};
+      case 'goal':case 'mini':return {t:it.t,x:N(it.x),y:N(it.y),rot:(Math.round(N(it.rot)/90)*90)%360};
+      case 'l':{if(!['pass','run','drib','line'].includes(it.k))return null;
+        const o={t:'l',k:it.k,x1:N(it.x1),y1:N(it.y1),x2:N(it.x2),y2:N(it.y2)};if(it.cx!=null){o.cx=N(it.cx);o.cy=N(it.cy);}return o;}
+      case 'r':return {t:'r',x:N(it.x),y:N(it.y),w:N(it.w),h:N(it.h)};
+      case 't':return {t:'t',x:N(it.x),y:N(it.y),s:String(it.s||'').slice(0,40)};
+      default:return null;
+    }}).filter(Boolean);
+  return {field:FIELDS.some(f=>f[0]===b.field)?b.field:'blank',items};
+}
+function goalSVG(cx,cy,rot,w,d){
+  let net=`<path d="M${-w/2} 0H${w/2}"/>`;
+  for(let i=1;i<8;i++)net+=`<path d="M${n1(-w/2+w*i/8)} ${-d/2}V${d/2}"/>`;
+  return `<g transform="translate(${n1(cx)} ${n1(cy)}) rotate(${rot||0})"><rect x="${-w/2}" y="${-d/2}" width="${w}" height="${d}" fill="#eee" stroke="#222" stroke-width="3"/><g stroke="#999" stroke-width="1.5">${net}</g></g>`;
+}
+function fieldSVG(f){
+  const L='fill="none" stroke="#222" stroke-width="3"';
+  if(f==='grid')return `<rect x="100" y="80" width="800" height="540" ${L}/>`;
+  if(f==='goal')return `<path d="M60 90H940" ${L}/><rect x="150" y="90" width="700" height="290" ${L}/><rect x="340" y="90" width="320" height="95" ${L}/>`+goalSVG(500,68,0,130,44);
+  if(f==='half')return `<rect x="40" y="70" width="920" height="590" ${L}/><rect x="227" y="70" width="546" height="185" ${L}/><rect x="376" y="70" width="248" height="62" ${L}/><path d="M417 255A103 103 0 0 0 583 255M397 660A103 103 0 0 1 603 660" ${L}/><circle cx="500" cy="194" r="4" fill="#222"/>`+goalSVG(500,49,0,100,42);
+  if(f==='full')return `<rect x="50" y="60" width="900" height="580" ${L}/><path d="M500 60V640" ${L}/><circle cx="500" cy="350" r="78" ${L}/><rect x="50" y="178" width="141" height="344" ${L}/><rect x="50" y="272" width="47" height="156" ${L}/><rect x="809" y="178" width="141" height="344" ${L}/><rect x="903" y="272" width="47" height="156" ${L}/>`+goalSVG(37,350,90,64,26)+goalSVG(963,350,90,64,26);
+  return '';
+}
+// 線：パス＝実線の矢印、人の動き＝点線の矢印、ドリブル＝波線の矢印、線＝矢印なし
+const lineMid=it=>it.cx!=null?{x:.25*it.x1+.5*it.cx+.25*it.x2,y:.25*it.y1+.5*it.cy+.25*it.y2}:{x:(it.x1+it.x2)/2,y:(it.y1+it.y2)/2};
+function lineSVG(it,hit){
+  const curved=it.cx!=null, arrow=it.k!=='line';
+  const q=t=>curved?{x:(1-t)*(1-t)*it.x1+2*t*(1-t)*it.cx+t*t*it.x2,y:(1-t)*(1-t)*it.y1+2*t*(1-t)*it.cy+t*t*it.y2}:{x:it.x1+(it.x2-it.x1)*t,y:it.y1+(it.y2-it.y1)*t};
+  const rough=curved?Math.hypot(it.cx-it.x1,it.cy-it.y1)+Math.hypot(it.x2-it.cx,it.y2-it.cy):Math.hypot(it.x2-it.x1,it.y2-it.y1);
+  const N=it.k==='drib'?clamp(Math.round(rough/4),12,200):curved?28:1;
+  const pts=[],len=[0];
+  for(let i=0;i<=N;i++){pts.push(q(i/N));if(i)len.push(len[i-1]+Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y));}
+  const total=len[N], cut=arrow?Math.max(0,total-14):total;
+  let ex=curved?it.x2-it.cx:it.x2-it.x1, ey=curved?it.y2-it.cy:it.y2-it.y1;
+  const el=Math.hypot(ex,ey)||1;ex/=el;ey/=el;
+  let d='';
+  for(let i=0;i<=N;i++){
+    if(len[i]>cut)break;
+    let {x,y}=pts[i];
+    if(it.k==='drib'){const a=pts[Math.min(N,i+1)],b=pts[Math.max(0,i-1)],tx=a.x-b.x,ty=a.y-b.y,tl=Math.hypot(tx,ty)||1;
+      const o=9*Math.sin(len[i]/9)*Math.max(0,Math.min(1,len[i]/20,(cut-len[i])/20));x-=ty/tl*o;y+=tx/tl*o;}
+    d+=(d?'L':'M')+n1(x)+' '+n1(y);
+  }
+  if(arrow)d+=`L${n1(it.x2-ex*14)} ${n1(it.y2-ey*14)}`;
+  const bx=it.x2-ex*22,by=it.y2-ey*22;
+  return (hit?`<path d="${d}L${n1(it.x2)} ${n1(it.y2)}" fill="none" stroke="#000" stroke-opacity="0" stroke-width="34"/>`:'')
+    +`<path d="${d}" fill="none" stroke="#222" stroke-width="${arrow?3.5:3}" stroke-linejoin="round"${it.k==='run'?' stroke-dasharray="12 9"':''}/>`
+    +(arrow?`<polygon points="${n1(it.x2)},${n1(it.y2)} ${n1(bx-ey*9)},${n1(by+ex*9)} ${n1(bx+ey*9)},${n1(by-ex*9)}" fill="#222"/>`:'');
+}
+function itemSVG(it,i,editing){
+  const x=n1(it.x),y=n1(it.y);let s='';
+  if(it.t==='p'){const fill={w:'#fff',b:'#222',S:'#bdbdbd',G:'#ffe066',F:'#fff'}[it.k];
+    s=`<circle cx="${x}" cy="${y}" r="17" fill="${fill}" stroke="#222" stroke-width="3"/>`+(it.k==='F'?`<circle cx="${x}" cy="${y}" r="23" fill="none" stroke="#222" stroke-width="2"/>`:'')
+      +('SGF'.includes(it.k)?`<text x="${x}" y="${y}" font-size="20" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#222">${it.k}</text>`:'');}
+  else if(it.t==='ball')s=`<circle cx="${x}" cy="${y}" r="9" fill="#fff" stroke="#222" stroke-width="3"/><circle cx="${x}" cy="${y}" r="3" fill="#222"/>`;
+  else if(it.t==='cone')s=`<polygon points="${x},${n1(it.y-17)} ${n1(it.x-14)},${n1(it.y+12)} ${n1(it.x+14)},${n1(it.y+12)}" fill="#e53935" stroke="#8e1b18" stroke-width="2" stroke-linejoin="round"/>`;
+  else if(it.t==='marker')s=`<ellipse cx="${x}" cy="${y}" rx="15" ry="8" fill="#fdd835" stroke="#8a6d00" stroke-width="2"/>`;
+  else if(it.t==='goal')s=goalSVG(it.x,it.y,it.rot,130,44);
+  else if(it.t==='mini')s=goalSVG(it.x,it.y,it.rot,70,26);
+  else if(it.t==='l')s=lineSVG(it,editing);
+  else if(it.t==='r')s=`<rect x="${n1(Math.min(it.x,it.x+it.w))}" y="${n1(Math.min(it.y,it.y+it.h))}" width="${n1(Math.abs(it.w))}" height="${n1(Math.abs(it.h))}" fill="#000" fill-opacity="0.04" stroke="#555" stroke-width="2.5" stroke-dasharray="10 8"/>`;
+  else if(it.t==='t')s=`<text x="${x}" y="${y}" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#222">${esc(it.s)}</text>`;
+  return `<g${editing?` data-i="${i}"`:''}>${s}</g>`;
+}
+const boardInner=(b,editing)=>`<rect width="${BW}" height="${BH}" fill="#fff"/>`+fieldSVG(b.field)+b.items.map((it,i)=>itemSVG(it,i,editing)).join('');
+const svgURL=b=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${BW} ${BH}" font-family="sans-serif">${boardInner(b,false)}</svg>`);
+
+let B=null; // 作図中の状態
+function toolIcon(id){
+  if(id==='select')return '<svg viewBox="0 0 24 24"><path d="M6 3l12 9-5.5 1 3 6-2.2 1-3-6L6 18z" fill="#222"/></svg>';
+  if(id==='r')return '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="4 3"/></svg>';
+  if(id==='t')return '<svg viewBox="0 0 24 24"><text x="12" y="19" font-size="18" font-weight="700" text-anchor="middle" fill="#222">あ</text></svg>';
+  if(id.startsWith('l:'))return `<svg viewBox="0 0 110 110">${itemSVG({t:'l',k:id.slice(2),x1:10,y1:92,x2:100,y2:20},0,false)}</svg>`;
+  const it=id.startsWith('p:')?{t:'p',k:id.slice(2),x:0,y:0}:{t:id,x:0,y:0,rot:0};
+  return `<svg viewBox="${id==='goal'?'-75 -75 150 150':id==='mini'?'-45 -45 90 90':'-27 -27 54 54'}">${itemSVG(it,0,false)}</svg>`;
+}
+function openBoard(idx){
+  const src=idx!=null?edit.images[idx].board:null;
+  B={idx,board:src?JSON.parse(JSON.stringify(src)):{field:'goal',items:[]},tool:'p:w',sel:null,undo:[],drag:null};
+  $('#board').classList.add('on');document.body.style.overflow='hidden';drawBoardUI();
+}
+function closeBoard(){B=null;$('#board').classList.remove('on');document.body.style.overflow='';}
+function drawBoardUI(){
+  $('#btools').innerHTML=`<select id="bfield" aria-label="コート">${FIELDS.map(([v,l])=>`<option value="${v}"${B.board.field===v?' selected':''}>${l}</option>`).join('')}</select>`
+    +TOOLS.map(([id,l])=>`<button class="tool${B.tool===id?' on':''}" data-act="bTool" data-tool="${id}">${toolIcon(id)}${l}</button>`).join('');
+  drawBoard();
+}
+function drawBoard(){
+  const b=B.board,it=b.items[B.sel];
+  const H=(k,x,y)=>`<circle data-h="${k}" cx="${n1(x)}" cy="${n1(y)}" r="22" fill="#1565C0" fill-opacity=".25" stroke="#1565C0" stroke-width="2.5"/>`;
+  let h=boardInner(b,true);
+  if(it){
+    if(it.t==='l'){const m=lineMid(it);h+=H('p1',it.x1,it.y1)+H('p2',it.x2,it.y2)+H('c',m.x,m.y);}
+    else if(it.t==='r')h+=H('rs',it.x+it.w,it.y+it.h);
+    else h+=`<circle cx="${n1(it.x)}" cy="${n1(it.y)}" r="${it.t==='goal'?78:it.t==='t'?44:32}" fill="none" stroke="#1565C0" stroke-width="2.5" stroke-dasharray="7 6" pointer-events="none"/>`;
+  }
+  $('#bsvg').innerHTML=h;
+  const hint=B.tool==='select'?'動かしたいものをタップして、そのまま指で動かします。':B.tool.startsWith('l:')?'図の上をなぞって線を引きます。引いたあと、まんなかの丸を動かすと曲げられます。':B.tool==='r'?'図の上をなぞって、わくを作ります。':B.tool==='t'?'文字を置きたい場所をタップします。':'図の上をタップして置きます。動かすときは「えらぶ」に切りかえます。';
+  $('#bsel').innerHTML=it?`<button class="btn sm danger" data-act="bDel">これを消す</button>`
+      +(it.t==='goal'||it.t==='mini'?'<button class="btn sm" data-act="bRot">向きをかえる</button>':'')
+      +(it.t==='t'?'<button class="btn sm" data-act="bText">文字をかえる</button>':'')
+      +(it.t==='l'&&it.cx!=null?'<button class="btn sm" data-act="bStraight">まっすぐにする</button>':'')
+      +(it.t==='l'?'<span>丸を動かして、長さ・向き・曲がりをかえられます。</span>':'')
+    :`<span style="flex:1">${hint}</span>${b.items.length?'<button class="btn sm" data-act="bClear">ぜんぶ消す</button>':''}`;
+}
+const bSnap=()=>{B.undo.push(JSON.stringify(B.board));if(B.undo.length>60)B.undo.shift();};
+function bPoint(e){const p=new DOMPoint(e.clientX,e.clientY).matrixTransform($('#bsvg').getScreenCTM().inverse());return {x:clamp(Math.round(p.x),0,BW),y:clamp(Math.round(p.y),0,BH)};}
+function bDown(e){
+  if(!B)return;e.preventDefault();
+  const p=bPoint(e),items=B.board.items,tool=B.tool,h=e.target.closest('[data-h]');
+  if(h)B.drag={type:'h',h:h.dataset.h,snapped:false};
+  else if(tool==='select'){const g=e.target.closest('[data-i]');B.sel=g?+g.dataset.i:null;B.drag=g?{type:'move',last:p,snapped:false}:null;drawBoard();}
+  else if(tool==='t'){const s=prompt('入れる文字（例：12m）');if(s&&s.trim()){bSnap();items.push({t:'t',x:p.x,y:p.y,s:s.trim().slice(0,40)});B.sel=null;drawBoard();}return;}
+  else if(tool.startsWith('l:')){bSnap();items.push({t:'l',k:tool.slice(2),x1:p.x,y1:p.y,x2:p.x,y2:p.y});B.sel=items.length-1;B.drag={type:'h',h:'p2',snapped:true,fresh:true};}
+  else if(tool==='r'){bSnap();items.push({t:'r',x:p.x,y:p.y,w:0,h:0});B.sel=items.length-1;B.drag={type:'h',h:'rs',snapped:true,fresh:true};}
+  else{bSnap();const it=tool.startsWith('p:')?{t:'p',k:tool.slice(2),x:p.x,y:p.y}:{t:tool,x:p.x,y:p.y};if(tool==='goal'||tool==='mini')it.rot=0;items.push(it);B.sel=null;drawBoard();return;}
+  if(B.drag)$('#bsvg').setPointerCapture(e.pointerId);
+}
+function bMove(e){
+  if(!B||!B.drag)return;
+  const p=bPoint(e),it=B.board.items[B.sel],d=B.drag;if(!it)return;
+  if(!d.snapped){bSnap();d.snapped=true;}
+  if(d.type==='move'){const dx=p.x-d.last.x,dy=p.y-d.last.y;d.last=p;
+    if(it.t==='l'){it.x1+=dx;it.x2+=dx;it.y1+=dy;it.y2+=dy;if(it.cx!=null){it.cx+=dx;it.cy+=dy;}}else{it.x+=dx;it.y+=dy;}}
+  else if(d.h==='p1'){it.x1=p.x;it.y1=p.y;}
+  else if(d.h==='p2'){it.x2=p.x;it.y2=p.y;}
+  else if(d.h==='c'){it.cx=2*p.x-(it.x1+it.x2)/2;it.cy=2*p.y-(it.y1+it.y2)/2;}
+  else if(d.h==='rs'){it.w=p.x-it.x;it.h=p.y-it.y;}
+  drawBoard();
+}
+function bUp(){
+  if(!B||!B.drag)return;
+  const d=B.drag,it=B.board.items[B.sel];B.drag=null;
+  if(it&&it.t==='r'){if(it.w<0){it.x+=it.w;it.w=-it.w;}if(it.h<0){it.y+=it.h;it.h=-it.h;}}
+  if(d.fresh&&it&&(it.t==='l'?Math.hypot(it.x2-it.x1,it.y2-it.y1)<18:(it.w<18||it.h<18))){B.board.items.pop();B.undo.pop();B.sel=null;}
+  drawBoard();
 }
 
 /* ========== 計画 ========== */
@@ -480,7 +681,7 @@ function vPlan(id){
   ${p.slots.map((s,i)=>{const c=card(s.cardId);return `<div class="slot s-${s.cat}" data-sid="${esc(s.id)}">
     <div class="slot-h"><span class="name">${esc(slotLabel(p,s))}</span><span class="grow"></span>
       <button class="iconbtn" data-act="slotUp" aria-label="上へ"${i===0?' disabled':''}>↑</button><button class="iconbtn" data-act="slotDown" aria-label="下へ"${i===p.slots.length-1?' disabled':''}>↓</button><button class="iconbtn" data-act="slotDel" aria-label="この枠を消す">×</button></div>
-    ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0]}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div>
+    ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div>
       <button class="btn sm" data-act="pick">入れ替える</button><button class="btn sm" data-act="unpick">外す</button></div>`
       :`<button class="pickbtn" data-act="pick">＋ ${esc(catLabel(s.cat))} のカードを選ぶ</button>`}
     <div class="slot-f"><input type="number" data-sf="minutes" min="0" inputmode="numeric" placeholder="${c&&c.minutes!=null?c.minutes:'分'}" value="${s.minutes??''}" aria-label="時間（分）"><input type="text" data-sf="memo" value="${esc(s.memo)}" placeholder="この日だけのメモ"></div>
@@ -519,7 +720,7 @@ function renderPicker(){
   $('#modalBox').innerHTML=`<div class="bar"><h3 style="margin:0">${esc(slotLabel(p,s))} のカードを選ぶ</h3><span class="grow"></span><button class="btn sm" data-act="closeModal">とじる</button></div>
     <div class="chips" style="margin-bottom:8px">${tg('theme','テーマ：'+p.theme,p.theme)}${tg('age','対象：'+p.age,p.age)}${tg('players','人数：'+p.players+'人',p.players!=null)}</div>
     <input type="search" data-pk="q" placeholder="名前でさがす" value="${esc(picker.q)}" style="margin-bottom:8px">
-    <div id="picklist">${list.length?list.map(c=>`<button class="pickitem" data-act="choose" data-id="${esc(c.id)}">${c.images[0]?`<img src="${c.images[0]}" alt="">`:'<span class="ph"></span>'}<span><b>${c.fav?'★ ':''}${esc(c.name)}</b><br><span class="meta">${esc(cardMeta(c))}</span></span></button>`).join(''):'<div class="empty">合うカードがありません。上のしぼり込みを外すか、図鑑にカードを登録してください。</div>'}</div>`;
+    <div id="picklist">${list.length?list.map(c=>`<button class="pickitem" data-act="choose" data-id="${esc(c.id)}">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:'<span class="ph"></span>'}<span><b>${c.fav?'★ ':''}${esc(c.name)}</b><br><span class="meta">${esc(cardMeta(c))}</span></span></button>`).join(''):'<div class="empty">合うカードがありません。上のしぼり込みを外すか、図鑑にカードを登録してください。</div>'}</div>`;
 }
 function renderAddToPlan(cardId){
   const ps=S.plans.filter(p=>!p.template).sort((a,b)=>b.date.localeCompare(a.date));
@@ -539,7 +740,7 @@ const newPlan=()=>normPlan({age:'U-12',slots:CATS.map(c=>({cat:c.id}))});
 function printPlan(p,mode){
   const info=[p.template?'':p.date,p.theme?`テーマ：${p.theme}`:'',p.age?`対象：${p.age}`:'',p.players!=null?`${p.players}人`:'',`合計 ${p.slots.reduce((a,s)=>a+(slotMin(s)||0),0)}分`].filter(Boolean).join('　');
   const rows=p.slots.map(s=>{const c=card(s.cardId),m=slotMin(s);return `<tr><td style="white-space:nowrap"><b>${esc(slotLabel(p,s))}</b></td><td style="white-space:nowrap">${m!=null?m+'分':''}</td>
-    <td>${c?`<b>${esc(c.name)}</b>${c.images[0]?`<img src="${c.images[0]}" alt="">`:''}`:''}</td>
+    <td>${c?`<b>${esc(c.name)}</b>${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}`:''}</td>
     <td>${c?`${esc([c.size,c.equip.join('、')].filter(Boolean).join(' ／ '))}${mode==='list'?ul(c.method):''}`:''}</td>
     <td>${c?ul(c.keys):''}${s.memo?`<div>メモ：${esc(s.memo)}</div>`:''}</td></tr>`;}).join('');
   let h=`<div class="p-head"><h1>${esc(planTitle(p))}</h1><p>${esc(info)}</p></div>
@@ -613,6 +814,18 @@ const ACT={
     S.cards=S.cards.filter(x=>x!==c);dbDel('cards',c.id);back();toast('削除しました');},
   rmImg:el=>{edit.images.splice(+el.dataset.i,1);renderEditParts();},
   rmOp:el=>{edit.opIds=edit.opIds.filter(x=>x!==el.dataset.id);renderEditParts();},
+  drawFig:()=>openBoard(null),
+  editBoard:el=>openBoard(+el.dataset.i),
+  bTool:el=>{B.tool=el.dataset.tool;if(B.tool!=='select')B.sel=null;drawBoardUI();},
+  bUndo:()=>{if(!B.undo.length){toast('これ以上は戻せません');return;}B.board=JSON.parse(B.undo.pop());B.sel=null;drawBoardUI();},
+  bCancel:()=>{if(B.undo.length&&!confirm('描いた内容を捨てますか？'))return;closeBoard();},
+  bDone:()=>{const board=normBoard(B.board);if(!board.items.length){toast('まだ何も描かれていません');return;}
+    const entry={src:svgURL(board),board};if(B.idx!=null)edit.images[B.idx]=entry;else edit.images.push(entry);closeBoard();renderEditParts();},
+  bDel:()=>{bSnap();B.board.items.splice(B.sel,1);B.sel=null;drawBoard();},
+  bRot:()=>{bSnap();const it=B.board.items[B.sel];it.rot=((it.rot||0)+90)%360;drawBoard();},
+  bText:()=>{const it=B.board.items[B.sel],s=prompt('文字',it.s);if(s&&s.trim()){bSnap();it.s=s.trim().slice(0,40);drawBoard();}},
+  bStraight:()=>{bSnap();const it=B.board.items[B.sel];delete it.cx;delete it.cy;drawBoard();},
+  bClear:()=>{if(!confirm('描いたものをぜんぶ消しますか？（「もとに戻す」で戻せます）'))return;bSnap();B.board.items=[];B.sel=null;drawBoard();},
   addToPlan:el=>renderAddToPlan(el.dataset.id),
   addToNew:el=>{const p=newPlan();S.plans.push(p);putIntoPlan(p,card(el.dataset.id));ACT.closeModal();go({name:'plan',id:p.id});toast('あたらしい計画に入れました');},
   addToThis:el=>{const p=plan(el.dataset.pid);putIntoPlan(p,card(el.dataset.id));ACT.closeModal();go({name:'plan',id:p.id});toast('計画に入れました');},
@@ -658,11 +871,13 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
-  if(t.id==='imgIn'){for(const f of t.files){try{edit.images.push(await shrink(f));}catch(err){toast(err.message);}}t.value='';renderEditParts();}
+  if(t.id==='imgIn'){for(const f of t.files){try{edit.images.push({src:await shrink(f),board:null});}catch(err){toast(err.message);}}t.value='';renderEditParts();}
+  if(t.id==='bfield'&&B){bSnap();B.board.field=t.value;drawBoard();}
   if(t.id==='opAdd'&&t.value){if(!edit.opIds.includes(t.value))edit.opIds.push(t.value);t.value='';renderEditParts();}
   if(t.id==='importIn'&&t.files[0]){await importData(await t.files[0].text());t.value='';}
 });
 window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
+{const s=$('#bsvg');s.addEventListener('pointerdown',bDown);s.addEventListener('pointermove',bMove);s.addEventListener('pointerup',bUp);s.addEventListener('pointercancel',bUp);}
 
 /* ========== 起動 ========== */
 (async()=>{
@@ -673,6 +888,7 @@ window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
     const meta=await dbAll('meta'), get=k=>(meta.find(m=>m.key===k)||{}).value;
     S.themes=get('themes')||DEFAULT_THEMES.map(t=>({...t}));
     if(!get('seeded')){await putSeed();await dbPut('meta',{key:'seeded',value:1});await saveThemes();}
+    if(!get('seedfig')){await addSeedFigs();await dbPut('meta',{key:'seedfig',value:1});}
     if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
   }catch(err){console.error(err);$('#main').innerHTML='<div class="empty">データの保存場所をひらけませんでした。プライベートブラウズを切って、もう一度ひらいてください。</div>';return;}
   render();
