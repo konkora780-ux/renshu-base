@@ -122,11 +122,12 @@ GitHub Pages：https://konkora780-ux.github.io/renshu-base/ （konkora780-ux/ren
 
 ユーザーの決定：共有の相手は「知っている指導者どうし」。保存先は drops の Supabase に相乗り（ref=`hortngwcijhjagwmcoxo`。体育プランと同じ）。他競技は今回は足さない（仕組みだけ）。商用化は見送り。
 
-- **サーバー側**：`supabase.sql`（SQL Editor に貼って1回実行）。表は `rb_config`・`rb_groups`・`rb_items`。RLSを有効にして許可を出さず、anon は表に直接さわれない。読み書きは security definer の関数だけ：`rb_create_group`（作成キーが必要）・`rb_join`・`rb_list`・`rb_get`・`rb_put`・`rb_remove`・`rb_delete_group`（作成キーが必要）。どれも「グループコード＋合言葉」を毎回確かめる（合言葉は bcrypt で保存）
+- **サーバー側**：設定の文を SQL Editor に貼って1回実行（実行ずみ）。表は `rb_config`・`rb_groups`・`rb_items`。RLSを有効にして許可を出さず、anon は表に直接さわれない。読み書きは security definer の関数だけ：`rb_create_group`（作成キーが必要）・`rb_join`・`rb_list`・`rb_get`・`rb_put`・`rb_remove`・`rb_delete_group`（作成キーが必要）。どれも「グループコード＋合言葉」を毎回確かめる（合言葉は bcrypt で保存）
 - **作成キー**：リポジトリの `supabase.sql` は置きかえ前の文字（`ここに作成キー`）のまま。本物の作成キー入りのファイルは `D:\Claudプロジェクト\練習ベース_共有の設定.sql`（公開しない）。**リポジトリ版をそのまま実行しないこと**（作成キーが公開の文字になってしまう）
 - **アプリ側**：下のタブに「グループ」（`vGroup()`）。設定は localStorage `renshu-base.group`＝`{code,pass,name,me,owner}`。`owner` は端末ごとの乱数で、出した本人（その端末）だけが上書き・取り下げできる。同じ人でも端末がちがうと別人あつかい
 - **出す**：カードの画面の「グループに出す」（`grpPut`）。`share:true`（共有してよいカード）だけ出せる。はじめから入っているカード（`builtinCard()`）は出せない。自分のメモ（`memo`）とお気に入りは送らない。じぶんのひな型は「グループに出す」（`grpPutPlan`）で、中の共有してよい自作カードもいっしょに出す。自分用カードは空の枠として届く
 - **入れる**：グループの一覧から「じぶんの図鑑に入れる」（`grpTake`）。同じ id で手元に入る。出した側が直して出しなおすと「新しい版に更新」が出る（`summary.u` と手元の `updated` をくらべる）
 - 上限：1件 1.5MB、1グループ1000件、グループ200個
-- **未検証**：本物の Supabase では動かしていない（ユーザーが SQL を実行するまで試せない）。ブラウザで fetch を差しかえた模擬サーバーでだけ確認した。SQL を実行してもらったら、curl で `rb_create_group` → `rb_put` → `rb_list` → `rb_get` → `rb_remove` → `rb_delete_group` を通して確かめること。**anon で `rb_items` を直接 SELECT して、何も返らないことも確かめる**
+- **検証ずみ（2026-10-03）**：ユーザーが SQL を実行し、本物の Supabase で一通り確かめた（作成・入る・出す・一覧・中身・出しなおし・取り下げ・グループ削除。作成キーや合言葉がちがう時、他人の上書き・取り下げ、1.5MBこえ、表への直接の読み書き、内部関数の直接呼び出しは、どれも断られる）。テスト用グループは消してある。アプリの画面から本物のサーバーにつないだ操作は、まだ人の手では試していない
+- **リポジトリに `supabase.sql` はない**（ユーザーの指示で取りのぞいた）。設定の文は `D:Claudプロジェクト練習ベース_共有の設定.sql` だけにある。関数を直す時は、そのファイルを直して、ユーザーに SQL Editor でもう一度実行してもらう
 - **競技**：`SPORTS`（いまはサッカーだけ）と、カード・計画の `sport` 欄を足した。切りかえの画面はまだない

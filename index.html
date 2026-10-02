@@ -3046,7 +3046,7 @@ async function importData(text){
 }
 
 /* ========== グループで共有（Supabase） ========== */
-// 表には直接さわらず、supabase.sql の関数だけを呼ぶ。関数は「グループコード＋合言葉」が合っている時だけ動く。
+// 表には直接さわらず、Supabase に用意した関数（rb_…）だけを呼ぶ。関数は「グループコード＋合言葉」が合っている時だけ動く。
 // 下のキーは公開用（publishable）。これだけでは何も読めない。
 const SB_URL='https://hortngwcijhjagwmcoxo.supabase.co',SB_KEY='sb_publishable_qy1V664U_HDLq_YEXkwo7w_fF6GpRBI';
 const LSG='renshu-base.group';
