@@ -177,6 +177,7 @@ a{color:var(--green)}
 <nav class="tabs">
   <button data-act="tab" data-tab="library"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>図鑑</button>
   <button data-act="tab" data-tab="plans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M8 11h8M8 15h8"/></svg>計画</button>
+  <button data-act="tab" data-tab="group"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M2 20c0-3.5 2.7-5.5 6-5.5s6 2 6 5.5M14.5 15c3.3-.6 7 .9 7 4.5"/></svg>グループ</button>
   <button data-act="tab" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>設定</button>
 </nav>
 <div id="modal"><div class="box" id="modalBox"></div></div>
@@ -195,6 +196,7 @@ a{color:var(--green)}
 const CATS=[{id:'wup',label:'W-up'},{id:'tr1',label:'Tr.1'},{id:'tr2',label:'Tr.2'},{id:'game',label:'Game'}];
 const AGES=['U-8','U-10','U-12','U-15','U-18','一般'];
 const SRC={own:'自作',jfa:'JFAなどの資料',web:'ネット',book:'書籍'};
+const SPORTS=[{id:'soccer',label:'サッカー'}]; // 競技を足す時は、ここに足し、テーマとコートの種類も競技ごとに用意する
 const EQUIP=['ボール','マーカー','コーン','ビブス','ゴール','ミニゴール'];
 const DEFAULT_THEMES=[
   ['攻撃','ゴールを奪う（シュート）'],['攻撃','ボールを運ぶ（ドリブル）'],['攻撃','パス＆コントロール'],['攻撃','ポゼッション'],['攻撃','ビルドアップ'],['攻撃','クロス'],['攻撃','コンビネーション'],['攻撃','ヘディング'],['攻撃','ロングキック'],
@@ -252,13 +254,13 @@ function normCard(o){
     images:(Array.isArray(o.images)?o.images:[]).map(x=>typeof x==='string'?{src:x,board:null}:{src:String(x&&x.src||''),board:x&&x.board?normBoard(x.board):null})
       .map(x=>x.board?{src:svgURL(x.board),board:x.board}:x).filter(x=>safeImg(x.src)),opIds:arr(o.opIds),
     src:{type:SRC[src.type]?src.type:'own',title:String(src.title||''),url:String(src.url||'')},
-    memo:txt(o.memo),fav:!!o.fav,share:!!o.share,created:o.created||Date.now(),updated:o.updated||Date.now()};
+    sport:SPORTS.some(x=>x.id===o.sport)?o.sport:'soccer',memo:txt(o.memo),fav:!!o.fav,share:!!o.share,created:o.created||Date.now(),updated:o.updated||Date.now()};
 }
 function normPlan(o){
   return {id:o.id||uid(),date:String(o.date||today()),title:String(o.title||''),theme:String(o.theme||''),age:String(o.age||''),
     players:num(o.players),totalMin:num(o.totalMin),
     slots:(Array.isArray(o.slots)?o.slots:[]).map(s=>({id:s.id||uid(),cat:CATS.some(c=>c.id===s.cat)?s.cat:'tr1',cardId:s.cardId||null,minutes:num(s.minutes),memo:String(s.memo||''),rating:[1,2,3].includes(+s.rating)?+s.rating:0,result:String(s.result||'')})),
-    review:String(o.review||''),template:!!o.template,draftTpl:!!o.draftTpl&&!o.template,done:!!o.done,created:o.created||Date.now(),updated:o.updated||Date.now()};
+    review:String(o.review||''),sport:SPORTS.some(x=>x.id===o.sport)?o.sport:'soccer',template:!!o.template,draftTpl:!!o.draftTpl&&!o.template,done:!!o.done,created:o.created||Date.now(),updated:o.updated||Date.now()};
 }
 const saveCard=c=>{c.updated=Date.now();return dbPut('cards',c);};
 const savePlan=p=>{p.updated=Date.now();return dbPut('plans',p);};
@@ -2534,7 +2536,7 @@ function vCard(id){
   ${sheetHTML(c)}
   ${(()=>{const o=cardStats().get(id);if(!o)return '';
     return `<div class="panel" style="margin-top:14px"><h3>実施の記録（${o.n}回）</h3>${o.rows.sort((a,b)=>b.p.date.localeCompare(a.p.date)).map(({p,s})=>`<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(p.date)}　${s.rating?RATE[s.rating]:''}</b><span class="meta">${esc([planTitle(p),s.result].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`).join('')}</div>`;})()}
-  <div class="bar" style="margin-top:14px"><button class="btn pri" data-act="addToPlan" data-id="${esc(id)}">計画に入れる</button><span class="grow"></span><button class="btn danger sm" data-act="delCard" data-id="${esc(id)}">削除</button></div>`;
+  <div class="bar" style="margin-top:14px"><button class="btn pri" data-act="addToPlan" data-id="${esc(id)}">計画に入れる</button>${grp()?`<button class="btn" data-act="grpPut" data-id="${esc(id)}">グループに出す</button>`:''}<span class="grow"></span><button class="btn danger sm" data-act="delCard" data-id="${esc(id)}">削除</button></div>`;
 }
 
 /* ========== カード登録・編集 ========== */
@@ -2912,7 +2914,7 @@ function vTemplate(p){
     ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div></div>`:'<p class="meta">カードは入っていません</p>'}
     ${s.memo?`<p class="meta">メモ：${esc(s.memo)}</p>`:''}</div>`;}).join('')}
   ${builtinPlan(p)?'<p class="hint">はじめから入っているひな型は、消したり、ひな型をやめたりできません。</p>'
-    :`<div class="bar"><button class="btn" data-act="planTpl">編集する</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`}`;
+    :`<div class="bar"><button class="btn" data-act="planTpl">編集する</button>${grp()?'<button class="btn" data-act="grpPutPlan">グループに出す</button>':''}<span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`}`;
 }
 const curPlan=()=>plan(view().id);
 const slotOf=el=>{const p=curPlan(),sid=el.closest('[data-sid]').dataset.sid;return p.slots.find(s=>s.id===sid);};
@@ -3043,20 +3045,112 @@ async function importData(text){
   await saveThemes();render();toast(`カード${cards.length}枚・計画${plans.length}件を読みこみました`);
 }
 
+/* ========== グループで共有（Supabase） ========== */
+// 表には直接さわらず、supabase.sql の関数だけを呼ぶ。関数は「グループコード＋合言葉」が合っている時だけ動く。
+// 下のキーは公開用（publishable）。これだけでは何も読めない。
+const SB_URL='https://hortngwcijhjagwmcoxo.supabase.co',SB_KEY='sb_publishable_qy1V664U_HDLq_YEXkwo7w_fF6GpRBI';
+const LSG='renshu-base.group';
+const GR={list:null,loading:false,err:'',busy:''};
+const grp=()=>{try{return JSON.parse(localStorage.getItem(LSG)||'null');}catch{return null;}};
+const setGrp=g=>{if(g)localStorage.setItem(LSG,JSON.stringify(g));else localStorage.removeItem(LSG);};
+const builtinCard=id=>/^(seed-|pk-|p\d+-)/.test(String(id));
+const RB_ERR={RB_AUTH:'グループコードか合言葉がちがいます',RB_KEY:'作成キーがちがいます',RB_NAME:'グループ名は1〜40文字で入れてください',RB_PASS:'合言葉は6〜60文字で入れてください',
+  RB_FULL:'これ以上入れられません（上限です）',RB_BIG:'大きすぎて出せません（写真の多いカードは、写真をへらしてください）',RB_NOT_OWNER:'ほかの人（またはほかの端末）が出したものなので、上書きできません',RB_GONE:'取り下げられたようです。一覧を更新してください'};
+async function rpc(fn,args){
+  let r;try{r=await fetch(`${SB_URL}/rest/v1/rpc/${fn}`,{method:'POST',headers:{apikey:SB_KEY,Authorization:'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(args)});}
+  catch{throw new Error('つながりませんでした。電波のある場所で、もう一度ためしてください');}
+  const t=await r.text();let j=null;try{j=t?JSON.parse(t):null;}catch{}
+  if(!r.ok){const m=j&&j.message||'';throw new Error(RB_ERR[m]||(r.status===404?'共有の準備がまだできていません（Supabaseの設定が必要です）':`うまくいきませんでした（${r.status}）`));}
+  return j;
+}
+const gArgs=()=>{const g=grp();return {p_code:g.code,p_pass:g.pass};};
+async function grpLoad(){
+  GR.loading=true;GR.err='';if(view().name==='group')render();
+  try{GR.list=await rpc('rb_list',{...gArgs(),p_owner:grp().owner})||[];}catch(e){GR.err=e.message;}
+  GR.loading=false;if(view().name==='group')render();
+}
+const cardSummary=c=>({name:c.name,cats:c.cats,themes:c.themes,ages:c.ages,u:c.updated,board:(c.images.find(im=>im.board)||{}).board||null,photos:c.images.filter(im=>!im.board).length});
+const planSummary=p=>({name:planTitle(p),theme:p.theme,age:p.age,u:p.updated,cards:p.slots.map(s=>(card(s.cardId)||{}).name).filter(Boolean)});
+async function grpPutCard(c,quiet){
+  const g=grp();
+  await rpc('rb_put',{...gArgs(),p_owner:g.owner,p_author:g.me,p_id:c.id,p_kind:'card',p_summary:cardSummary(c),p_data:{...c,fav:false,memo:''}});
+  if(!quiet)toast('グループに出しました');
+}
+function vGroup(){
+  const g=grp();
+  if(!g)return `<div class="panel"><h3>グループで共有する</h3>
+    <p class="meta">知っている指導者どうしで、カードとひな型を見せ合えます。グループコードと合言葉を知っている人だけが入れます。出すのは、自分で「グループに出す」を押したものだけです。</p></div>
+  <div class="panel"><h3>グループに入る</h3>
+    <div class="grid2"><label class="f"><span>グループコード（6文字）</span><input type="text" id="gCode" autocomplete="off" autocapitalize="characters" maxlength="6"></label>
+    <label class="f"><span>合言葉</span><input type="text" id="gPass" autocomplete="off"></label>
+    <label class="f"><span>じぶんの名前（グループの人に見えます）</span><input type="text" id="gMe" autocomplete="off" maxlength="30"></label></div>
+    <div class="bar"><button class="btn pri" data-act="grpJoin">入る</button></div></div>
+  <div class="panel"><h3>あたらしくグループを作る</h3>
+    <div class="grid2"><label class="f"><span>グループ名</span><input type="text" id="gName" autocomplete="off" maxlength="40" placeholder="例：○○FC コーチ"></label>
+    <label class="f"><span>合言葉（6文字以上。入る人に伝えます）</span><input type="text" id="gNewPass" autocomplete="off"></label>
+    <label class="f"><span>作成キー</span><input type="text" id="gKey" autocomplete="off"></label>
+    <label class="f"><span>じぶんの名前</span><input type="text" id="gMe2" autocomplete="off" maxlength="30"></label></div>
+    <div class="bar"><button class="btn" data-act="grpCreate">作る</button></div>
+    <p class="hint">作成キーは、グループを作る人だけが使う文字です（共有の準備をした時に決めたもの）。入る人には伝えません。</p></div>`;
+  const L=GR.list||[],cs=L.filter(x=>x.kind==='card'),ps=L.filter(x=>x.kind==='plan');
+  const state=x=>{const loc=x.kind==='card'?card(x.id):plan(x.id);if(!loc)return 'new';return ((x.summary||{}).u||0)>loc.updated?'old':'have';};
+  const row=x=>{const sm=x.summary||{},st=state(x),b=sm.board?normBoard(sm.board):null;
+    const meta=x.kind==='card'?[(sm.cats||[]).map(catLabel).join('・'),(sm.themes||[]).join('・'),(sm.ages||[]).join('・'),sm.photos?`写真${sm.photos}枚`:''].filter(Boolean).join(' ・ ')
+      :[sm.theme,sm.age,(sm.cards||[]).length?`${sm.cards.length}メニュー：${sm.cards.join('、')}`:''].filter(Boolean).join(' ・ ');
+    return `<div class="slot"><div class="slot-card">${b?`<img src="${svgURL(b)}" alt="">`:''}<div class="grow"><b>${esc(sm.name||'（名前なし）')}</b><p class="meta">${esc(meta)}</p><p class="meta">${esc(x.author||'名前なし')} さん ・ ${esc(String(x.updated_at).slice(0,10))}${x.mine?' ・ じぶんが出したもの':''}</p></div>
+      ${st==='have'?`<span class="meta">入れてあります</span>`:`<button class="btn sm pri" data-act="grpTake" data-id="${esc(x.id)}"${GR.busy===x.id?' disabled':''}>${st==='old'?'新しい版に更新':x.kind==='card'?'じぶんの図鑑に入れる':'じぶんのひな型に入れる'}</button>`}
+      ${x.mine?`<button class="btn sm" data-act="grpDrop" data-id="${esc(x.id)}">取り下げる</button>`:''}</div></div>`;};
+  return `<div class="panel"><h3>${esc(g.name)}</h3>
+    <p class="meta">グループコード <b style="font-size:18px;letter-spacing:2px">${esc(g.code)}</b>　じぶんの名前：${esc(g.me)}</p>
+    <p class="hint">ほかの人をさそう時は、このグループコードと合言葉を伝えてください。出したい時は、カードやじぶんのひな型を開いて「グループに出す」を押します。</p>
+    <div class="bar"><button class="btn pri" data-act="grpReload"${GR.loading?' disabled':''}>${GR.loading?'読みこみ中…':'一覧を更新'}</button><span class="grow"></span><button class="btn sm" data-act="grpLeave">グループから出る</button></div>
+    ${GR.err?`<p class="total over">${esc(GR.err)}</p>`:''}</div>
+  <h3>カード（${cs.length}）</h3>${cs.length?cs.map(row).join(''):`<p class="meta">${GR.list?'まだ出されていません。':'「一覧を更新」を押すと表示されます。'}</p>`}
+  <h3>ひな型（${ps.length}）</h3>${ps.length?ps.map(row).join(''):`<p class="meta">${GR.list?'まだ出されていません。':''}</p>`}`;
+}
+
 /* ========== 描画 ========== */
 function render(){
   const v=view(), m=$('#main');
   const root=stack[0].name;
   $$('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===root));
   const a2=isIOS&&!isStandalone()&&!sessionStorage.getItem('a2hs')?`<div id="a2hs" style="display:block">ホーム画面に追加して使ってください（Safariのままだとデータが消えることがあります）。<button class="btn sm" data-act="a2hsClose" style="margin-left:6px">とじる</button></div>`:'';
-  m.innerHTML=a2+({library:vLibrary,plans:vPlans,settings:vSettings,card:()=>vCard(v.id),cardEdit:()=>vCardEdit(v.id),plan:()=>vPlan(v.id)}[v.name])();
+  m.innerHTML=a2+({library:vLibrary,plans:vPlans,settings:vSettings,group:vGroup,card:()=>vCard(v.id),cardEdit:()=>vCardEdit(v.id),plan:()=>vPlan(v.id)}[v.name])();
   if(v.name==='library')renderGrid();
   if(v.name==='cardEdit')renderEditParts();
 }
 
 /* ========== 操作 ========== */
 const ACT={
-  tab:el=>{edit=null;stack=[{name:el.dataset.tab}];render();window.scrollTo(0,0);},
+  grpJoin:async()=>{const code=$('#gCode').value.trim().toUpperCase(),pass=$('#gPass').value,me=$('#gMe').value.trim();
+    if(!code||!pass||!me){toast('グループコード・合言葉・名前を入れてください');return;}
+    try{const r=await rpc('rb_join',{p_code:code,p_pass:pass});setGrp({code,pass,name:r.name,me,owner:crypto.randomUUID()});GR.list=null;render();toast(`「${r.name}」に入りました`);grpLoad();}catch(e){toast(e.message);}},
+  grpCreate:async()=>{const name=$('#gName').value.trim(),pass=$('#gNewPass').value,key=$('#gKey').value.trim(),me=$('#gMe2').value.trim();
+    if(!name||!pass||!key||!me){toast('4つの欄をすべて入れてください');return;}
+    try{const code=await rpc('rb_create_group',{p_key:key,p_name:name,p_pass:pass});setGrp({code,pass,name,me,owner:crypto.randomUUID()});GR.list=[];render();toast('グループを作りました');}catch(e){toast(e.message);}},
+  grpLeave:()=>{if(!confirm('この端末をグループから出します。グループに出したものは残ります（取り下げたい時は、先に「取り下げる」を押してください）。出ますか？'))return;setGrp(null);GR.list=null;GR.err='';render();},
+  grpReload:()=>grpLoad(),
+  grpPut:async el=>{const c=card(el.dataset.id);
+    if(builtinCard(c.id)){toast('はじめから入っているカードは、相手の図鑑にもあるので出す必要はありません');return;}
+    if(!c.share){toast('「共有してよいカード」に印をつけてから出してください（カードの編集にあります）');return;}
+    try{await grpPutCard(c);GR.list=null;}catch(e){toast(e.message);}},
+  grpPutPlan:async()=>{const p=curPlan(),g=grp();if(!p.template||builtinPlan(p))return;
+    const cs=[...new Set(p.slots.map(s=>s.cardId))].map(card).filter(Boolean).filter(c=>!builtinCard(c.id));
+    const priv=cs.filter(c=>!c.share),pub=cs.filter(c=>c.share);
+    if(priv.length&&!confirm(`このひな型には、自分用のカードが${priv.length}枚入っています（${priv.map(c=>c.name).join('、')}）。相手には空の枠として届きます。このまま出しますか？`))return;
+    try{for(const c of pub)await grpPutCard(c,true);
+      await rpc('rb_put',{...gArgs(),p_owner:g.owner,p_author:g.me,p_id:p.id,p_kind:'plan',p_summary:planSummary(p),p_data:{...p,review:'',done:false,slots:p.slots.map(s=>({...s,rating:0,result:''}))}});
+      GR.list=null;toast(pub.length?`ひな型と、カード${pub.length}枚をグループに出しました`:'ひな型をグループに出しました');}catch(e){toast(e.message);}},
+  grpTake:async el=>{const id=el.dataset.id,x=(GR.list||[]).find(y=>y.id===id);if(!x)return;GR.busy=id;render();
+    try{const d=await rpc('rb_get',{...gArgs(),p_id:id});
+      if(x.kind==='card'){const c=normCard({...d,fav:false,memo:(card(id)||{}).memo||'',share:true});await ensureThemes(c.themes);const i=S.cards.findIndex(y=>y.id===id);if(i>=0)S.cards[i]=c;else S.cards.push(c);await dbPut('cards',c);toast('じぶんの図鑑に入れました');}
+      else{const p=normPlan({...d,template:true,draftTpl:false});const i=S.plans.findIndex(y=>y.id===id);if(i>=0)S.plans[i]=p;else S.plans.push(p);await dbPut('plans',p);
+        const miss=p.slots.filter(s=>s.cardId&&!card(s.cardId)).length;toast(miss?`ひな型を入れました（カード${miss}枚は、まだ図鑑にありません。カードのほうも入れてください）`:'じぶんのひな型に入れました');}
+    }catch(e){toast(e.message);}
+    GR.busy='';render();},
+  grpDrop:async el=>{if(!confirm('グループから取り下げます。すでに入れた人の端末からは消えません。取り下げますか？'))return;
+    try{await rpc('rb_remove',{...gArgs(),p_owner:grp().owner,p_id:el.dataset.id});toast('取り下げました');await grpLoad();}catch(e){toast(e.message);}},
+  tab:el=>{edit=null;stack=[{name:el.dataset.tab}];render();window.scrollTo(0,0);if(el.dataset.tab==='group'&&grp()&&!GR.list)grpLoad();},
   back,
   a2hsClose:()=>{sessionStorage.setItem('a2hs','1');render();},
   open:(el,e)=>{e.preventDefault();ACT.closeModal();go({name:'card',id:el.dataset.id});},
