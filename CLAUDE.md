@@ -27,6 +27,10 @@
 - 資料を写したカードは `share:false`（自分用）のままにする。共有・販売版には `share:true` だけを載せる
 - 体育プラン（生徒用の教材）とは別アプリ。コードは共有しない
 
+## 公開
+
+GitHub Pages：https://konkora780-ux.github.io/renshu-base/ （konkora780-ux/renshu-base の main に push すると反映）
+
 ## 動かし方
 
 `D:\Claudプロジェクト\.claude\launch.json` の `renshu-base`（ポート8792）でプレビューできる。
