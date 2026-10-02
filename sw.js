@@ -1,6 +1,6 @@
 // 練習ベース：グラウンドなど電波のない場所でも開けるようにする。
 // ネットにつながる時は常に最新を取りにいき、だめな時だけ手元の控えを使う。
-const CACHE = 'renshu-base-v6';
+const CACHE = 'renshu-base-v7';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
