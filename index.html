@@ -106,6 +106,10 @@ a{color:var(--green)}
 .slot-card .t{font-weight:700;font-size:16px;border:0;background:none;padding:0;text-align:left;color:var(--green);text-decoration:underline}
 .pickbtn{width:100%;border:2px dashed var(--line);background:var(--bg);border-radius:10px;padding:16px;color:var(--sub);font-weight:700;margin-bottom:8px}
 .slot-f{display:grid;grid-template-columns:110px 1fr;gap:8px}
+.slot-card{flex-wrap:wrap}
+.slot-card>.grow{min-width:180px}
+.rate{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px}
+.rate input{flex:1;min-width:180px}
 .iconbtn{border:1px solid var(--line);background:#fff;border-radius:8px;width:36px;height:36px;padding:0}
 /* モーダル */
 #modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
@@ -220,7 +224,7 @@ const dbDel=(name,id)=>req(store(name,'readwrite').delete(id));
 
 /* ========== 状態 ========== */
 const S={cards:[],plans:[],themes:[]};
-const F={q:'',cat:'',theme:'',age:'',players:'',src:'',fav:false};
+const F={q:'',cat:'',theme:'',age:'',players:'',src:'',sort:'',fav:false};
 let stack=[{name:'library'}];
 let edit=null;   // カード編集中の一時データ {images,opIds}
 let picker=null; // カード選択モーダルの状態
@@ -246,12 +250,22 @@ function normCard(o){
 function normPlan(o){
   return {id:o.id||uid(),date:String(o.date||today()),title:String(o.title||''),theme:String(o.theme||''),age:String(o.age||''),
     players:num(o.players),totalMin:num(o.totalMin),
-    slots:(Array.isArray(o.slots)?o.slots:[]).map(s=>({id:s.id||uid(),cat:CATS.some(c=>c.id===s.cat)?s.cat:'tr1',cardId:s.cardId||null,minutes:num(s.minutes),memo:String(s.memo||'')})),
-    review:String(o.review||''),template:!!o.template,created:o.created||Date.now(),updated:o.updated||Date.now()};
+    slots:(Array.isArray(o.slots)?o.slots:[]).map(s=>({id:s.id||uid(),cat:CATS.some(c=>c.id===s.cat)?s.cat:'tr1',cardId:s.cardId||null,minutes:num(s.minutes),memo:String(s.memo||''),rating:[1,2,3].includes(+s.rating)?+s.rating:0,result:String(s.result||'')})),
+    review:String(o.review||''),template:!!o.template,done:!!o.done,created:o.created||Date.now(),updated:o.updated||Date.now()};
 }
 const saveCard=c=>{c.updated=Date.now();return dbPut('cards',c);};
 const savePlan=p=>{p.updated=Date.now();return dbPut('plans',p);};
 const saveThemes=()=>dbPut('meta',{key:'themes',value:S.themes});
+async function ensureThemes(list){let added=false;for(const t of list){if(t&&!S.themes.some(x=>x.name===t)){S.themes.push({group:'じぶんのテーマ',name:t});added=true;}}if(added)await saveThemes();}
+// 実施ずみの計画から、カードごとの使用回数・最後に使った日・できばえを集める
+const RATE={3:'◎',2:'○',1:'△'};
+function cardStats(){
+  const m=new Map();
+  for(const p of S.plans){if(!p.done||p.template)continue;
+    for(const s of p.slots){if(!s.cardId)continue;const o=m.get(s.cardId)||{n:0,last:'',sum:0,rn:0,rows:[]};
+      o.n++;if(p.date>o.last)o.last=p.date;if(s.rating){o.sum+=s.rating;o.rn++;}o.rows.push({p,s});m.set(s.cardId,o);}}
+  return m;
+}
 const planTitle=p=>p.title||`${p.date} ${p.theme||'トレーニング'}`;
 const slotMin=s=>s.minutes??(card(s.cardId)||{}).minutes??null;
 
@@ -354,17 +368,21 @@ function vLibrary(){
     <select data-ff="age" aria-label="年代">${opt(AGES.map(a=>[a,a]),F.age,'年代：すべて')}</select>
     <input type="number" data-ff="players" inputmode="numeric" min="1" placeholder="人数（例：12）" value="${esc(F.players)}" aria-label="人数">
     <select data-ff="src" aria-label="出典">${opt(Object.entries(SRC),F.src,'出典：すべて')}</select>
+    <select data-ff="sort" aria-label="ならび順">${opt([['used','よく使う順'],['rest','しばらく使っていない順'],['rate','できばえの良い順']],F.sort,'ならび：あたらしい順')}</select>
   </div>
   <div id="grid"></div>
   <button class="fab" data-act="newCard">＋ カード</button>`;
 }
 function renderGrid(){
   const g=$('#grid');if(!g)return;
-  const list=S.cards.filter(matchCard).sort((a,b)=>(b.fav-a.fav)||(b.updated-a.updated));
+  const st=cardStats(),g0=c=>st.get(c.id)||{n:0,last:'',sum:0,rn:0},avg=c=>{const o=g0(c);return o.rn?o.sum/o.rn:0;};
+  const sorter={used:(a,b)=>g0(b).n-g0(a).n,rest:(a,b)=>g0(a).last.localeCompare(g0(b).last),rate:(a,b)=>avg(b)-avg(a)}[F.sort]||((a,b)=>(b.fav-a.fav));
+  const list=S.cards.filter(matchCard).sort((a,b)=>sorter(a,b)||(b.updated-a.updated));
+  const used=c=>{const o=st.get(c.id);return o?`<p class="meta">実施${o.n}回 ・ 最後 ${esc(o.last)}${o.rn?' ・ '+RATE[Math.round(o.sum/o.rn)]:''}</p>`:'';};
   g.innerHTML=`<p class="count">${list.length}枚 / 全${S.cards.length}枚</p>`+(list.length?`<div class="cards">${list.map(c=>`
     <button class="card" data-act="open" data-id="${esc(c.id)}">
       <div class="thumb">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:PITCH}</div>
-      <div class="cbody">${badges(c)}${c.fav?'<span class="star">★</span>':''}<h3>${esc(c.name)}</h3><p class="meta">${esc(cardMeta(c))}</p></div>
+      <div class="cbody">${badges(c)}${c.fav?'<span class="star">★</span>':''}<h3>${esc(c.name)}</h3><p class="meta">${esc(cardMeta(c))}</p>${used(c)}</div>
     </button>`).join('')}</div>`:`<div class="empty">${S.cards.length?'条件に合うカードがありません。しぼり込みをゆるめてください。':'カードがまだありません。「＋ カード」から登録できます。'}</div>`);
 }
 
@@ -404,21 +422,26 @@ function vCard(id){
     <button class="btn sm" data-act="editCard" data-id="${esc(id)}">編集</button>
     <button class="btn sm" data-act="dupCard" data-id="${esc(id)}">複製</button></div>
   ${sheetHTML(c)}
+  ${(()=>{const o=cardStats().get(id);if(!o)return '';
+    return `<div class="panel" style="margin-top:14px"><h3>実施の記録（${o.n}回）</h3>${o.rows.sort((a,b)=>b.p.date.localeCompare(a.p.date)).map(({p,s})=>`<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(p.date)}　${s.rating?RATE[s.rating]:''}</b><span class="meta">${esc([planTitle(p),s.result].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`).join('')}</div>`;})()}
   <div class="bar" style="margin-top:14px"><button class="btn pri" data-act="addToPlan" data-id="${esc(id)}">計画に入れる</button><span class="grow"></span><button class="btn danger sm" data-act="delCard" data-id="${esc(id)}">削除</button></div>`;
 }
 
 /* ========== カード登録・編集 ========== */
 const chipSet=(name,list,sel)=>`<div class="chips">${list.map(([v,l])=>`<label class="chip"><input type="checkbox" name="${name}" value="${esc(v)}"${sel.includes(v)?' checked':''}><span>${esc(l)}</span></label>`).join('')}</div>`;
 function vCardEdit(id){
-  const c=id?card(id):normCard({name:'',ages:['U-12']});
-  if(!edit)edit={images:[...c.images],opIds:[...c.opIds]};
+  if(!edit){const o=id?card(id):normCard({name:'',ages:['U-12']});edit={images:[...o.images],opIds:[...o.opIds],draft:null};}
+  const c=edit.draft||(id?card(id):normCard({name:'',ages:['U-12']}));
   const extraThemes=c.themes.filter(t=>!S.themes.some(x=>x.name===t));
   const extraEquip=c.equip.filter(e=>!EQUIP.includes(e));
   const ta=(n,l,v,h)=>`<label class="f"><span>${l}${h?` <span class="hint">${h}</span>`:''}</span><textarea name="${n}">${esc(v)}</textarea></label>`;
   return `<form id="cardForm" autocomplete="off">
   <div class="bar"><button type="button" class="btn ghost" data-act="cancelEdit">‹ やめる</button><span class="grow"></span><button type="submit" class="btn pri">保存する</button></div>
+  ${id?'':`<div class="panel"><h3>写真・PDFからよみとる</h3>
+    <label class="btn" style="display:inline-flex;align-items:center">写真・PDFをえらぶ<input type="file" id="scanIn" accept="image/*,application/pdf" multiple hidden></label>
+    <p class="hint">資料を撮影するかPDFをえらぶと、AIが下の各項目に下書きを入れます。保存する前に内容を確認してください。はじめに「設定」でGemini APIキーの登録が必要です。</p></div>`}
   <div class="panel"><h3>きほん</h3>
-    <label class="f"><span>メニュー名（必須）</span><input type="text" name="name" required value="${id?esc(c.name):''}" placeholder="例：3対3＋3サーバー ハンドパス"></label>
+    <label class="f"><span>メニュー名（必須）</span><input type="text" name="name" required value="${c.name==='（名前なし）'?'':esc(c.name)}" placeholder="例：3対3＋3サーバー ハンドパス"></label>
     <div class="f"><span class="flabel">区分（必須・複数えらべます）</span>${chipSet('cats',CATS.map(x=>[x.id,x.label]),c.cats)}</div>
     <div class="f"><span class="flabel">テーマ（目的）</span>${chipSet('themes',[...S.themes.map(t=>[t.name,t.name]),...extraThemes.map(t=>[t,t])],c.themes)}
       <input type="text" name="themeNew" placeholder="一覧にないテーマを追加（、で区切る）" style="margin-top:8px"></div>
@@ -469,8 +492,8 @@ function renderEditParts(){
   const s=$('#imgstrip');if(s)s.innerHTML=edit.images.map((im,i)=>`<div class="it"><img src="${im.src}" alt="">${im.board?`<button type="button" class="re" data-act="editBoard" data-i="${i}">描きなおす</button>`:''}<button type="button" class="x" data-act="rmImg" data-i="${i}" aria-label="この図を外す">×</button></div>`).join('');
   const o=$('#oplist');if(o)o.innerHTML=edit.opIds.map(card).filter(Boolean).map(x=>`<div class="bar" style="margin-bottom:6px"><span>${esc(x.name)}</span><span class="grow"></span><button type="button" class="btn sm" data-act="rmOp" data-id="${esc(x.id)}">外す</button></div>`).join('');
 }
-function shrink(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();
-  im.onload=()=>{const m=1400,k=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas');
+function shrink(file,m=1400){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),cv=document.createElement('canvas');
     cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height);x.drawImage(im,0,0,cv.width,cv.height);
     URL.revokeObjectURL(url);res(cv.toDataURL('image/jpeg',.85));};
   im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('画像を読みこめません'));};im.src=url;});}
@@ -480,8 +503,7 @@ async function submitCard(form){
   const cats=all('cats');
   if(!cats.length){toast('区分を1つ以上えらんでください');return;}
   const newThemes=split(fd.get('themeNew'));
-  for(const t of newThemes){if(!S.themes.some(x=>x.name===t))S.themes.push({group:'じぶんのテーマ',name:t});}
-  if(newThemes.length)await saveThemes();
+  await ensureThemes([...all('themes'),...newThemes]);
   const old=id?card(id):null;
   const c=normCard({...(old||{}),name:String(fd.get('name')).trim(),cats,themes:[...new Set([...all('themes'),...newThemes])],ages:all('ages'),
     minP:fd.get('minP'),maxP:fd.get('maxP'),minutes:fd.get('minutes'),gk:fd.has('gk'),size:fd.get('size'),equip:[...new Set([...all('equip'),...split(fd.get('equipNew'))])],
@@ -491,6 +513,56 @@ async function submitCard(form){
   await saveCard(c);edit=null;stack.pop();
   if(!old)stack.push({name:'card',id:c.id});
   render();toast('保存しました');
+}
+
+/* ========== 写真・PDFからのよみとり（Gemini） ========== */
+// APIキーは端末の localStorage にだけ置く（書き出しJSONには入れない）
+const LSK='renshu-base.gemini',LSM='renshu-base.geminiModel',GEMINI_MODEL='gemini-2.5-flash';
+let scanDraft=null;
+const fileB64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=()=>rej(new Error('ファイルを読めませんでした'));r.readAsDataURL(f);});
+const scanPrompt=()=>`あなたはサッカー指導の資料を整理する助手です。添付の写真・PDFにある練習メニューを読みとり、次の形のJSONだけを返してください。
+{"sourceTitle":"資料の名前（わかれば）","menus":[{"name":"メニュー名","cats":["wup"],"themes":["テーマ"],"ages":["U-12"],"minP":null,"maxP":null,"gk":false,"minutes":null,"size":"大きさ","equip":["用具"],"method":["方法・ルールを1項目ずつ"],"keys":["キーファクター"],"steps":["トレーニングの積み上げ（段階）"],"notes":["留意点・コーチングポイント"],"gkPoints":["GKポイント"]}]}
+きまり：
+- メニューが複数あれば、1つずつ別の要素にする。発展形（OP・オプション）も別の要素にする。
+- cats は wup（W-up・ウォーミングアップ）、tr1（Tr.1・トレーニング1）、tr2（Tr.2・トレーニング2）、game（Game・ゲーム）のどれか。書かれていなければ内容から1つ選ぶ。
+- themes は次の一覧から合うものを選ぶ。合うものがなければ資料の言葉を短く入れる：${S.themes.map(t=>t.name).join('、')}
+- ages は ${AGES.join('、')} から選ぶ。書かれていなければ空の配列。
+- 文章は丸写しにせず、意味を変えずに短く言いかえる。
+- 資料に書かれていない項目は、空の配列・空文字・null にする。数字を作らない。人数は「3対3＋3サーバー」のように読みとれる場合だけ数える。`;
+async function scanFiles(files){
+  const parts=[{text:scanPrompt()}];let img=null;
+  for(const f of files){
+    if(f.type==='application/pdf'){if(f.size>15e6)throw new Error('PDFが大きすぎます（15MBまで）');parts.push({inline_data:{mime_type:'application/pdf',data:await fileB64(f)}});}
+    else if(f.type.startsWith('image/')){parts.push({inline_data:{mime_type:'image/jpeg',data:(await shrink(f,2000)).split(',')[1]}});if(!img)img=await shrink(f);}
+    else throw new Error('写真かPDFをえらんでください');
+  }
+  const model=localStorage.getItem(LSM)||GEMINI_MODEL;
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',
+    headers:{'Content-Type':'application/json','x-goog-api-key':localStorage.getItem(LSK)},
+    body:JSON.stringify({contents:[{parts}],generationConfig:{response_mime_type:'application/json',temperature:0.2}})});
+  const j=await res.json().catch(()=>({}));
+  if(!res.ok||j.error)throw new Error((j.error&&j.error.message)||`通信エラー（${res.status}）`);
+  const txt=((((j.candidates||[])[0]||{}).content||{}).parts||[]).map(p=>p.text||'').join('');
+  let d;try{d=JSON.parse(txt.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g,''));}catch{throw new Error('よみとり結果を解釈できませんでした。もう一度ためしてください');}
+  const menus=Array.isArray(d)?d:(d&&Array.isArray(d.menus)?d.menus:[]);
+  const title=String((d&&d.sourceTitle)||files[0].name||'').slice(0,80);
+  // AIの返事からは決まった項目だけを取り出す（id・図・リンクなどは受けとらない）
+  const cards=menus.filter(m=>m&&m.name).map(m=>normCard({name:m.name,cats:m.cats,themes:m.themes,ages:m.ages,minP:m.minP,maxP:m.maxP,gk:m.gk,minutes:m.minutes,size:m.size,equip:m.equip,
+    method:m.method,keys:m.keys,steps:m.steps,notes:m.notes,gkPoints:m.gkPoints,src:{type:'jfa',title},share:false})).map(c=>(c.cats.length||c.cats.push('tr1'),c));
+  return {cards,img};
+}
+async function runScan(files){
+  if(!localStorage.getItem(LSK)){toast('さきに「設定」でGemini APIキーを登録してください');return;}
+  $('#modalBox').innerHTML='<div class="empty"><b>よみとっています…</b><br>1分ほどかかることがあります。このままお待ちください。</div>';$('#modal').classList.add('on');
+  let r;
+  try{r=await scanFiles(files);}catch(err){console.error(err);ACT.closeModal();toast('よみとれませんでした：'+err.message);return;}
+  if(!r.cards.length){ACT.closeModal();toast('練習メニューが見つかりませんでした');return;}
+  if(r.cards.length===1){ACT.closeModal();edit.draft=r.cards[0];if(r.img)edit.images.push({src:r.img,board:null});render();window.scrollTo(0,0);toast('下書きを入れました。内容を確認して保存してください');return;}
+  scanDraft=r.cards;
+  $('#modalBox').innerHTML=`<div class="bar"><h3 style="margin:0">${r.cards.length}つのメニューが見つかりました</h3><span class="grow"></span><button class="btn sm" data-act="closeModal">やめる</button></div>
+    <p class="meta" style="margin-bottom:8px">登録するものにチェックを入れてください。登録したあと、カードを開いて内容を確認・修正できます。</p>
+    ${r.cards.map((c,i)=>`<label class="pickitem"><input type="checkbox" data-scan="${i}" checked style="width:22px;height:22px;flex:none"><span>${badges(c)}<b>${esc(c.name)}</b><br><span class="meta">${esc(cardMeta(c))}</span></span></label>`).join('')}
+    <button class="btn pri" data-act="scanSave" style="width:100%;margin-top:8px">えらんだメニューを登録する</button>`;
 }
 
 /* ========== 作図ボード ========== */
@@ -649,7 +721,7 @@ function bUp(){
 /* ========== 計画 ========== */
 function vPlans(){
   const row=p=>{const names=p.slots.map(s=>card(s.cardId)).filter(Boolean).map(c=>c.name);
-    return `<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(planTitle(p))}</b><span class="meta">${esc([p.template?'':p.date,p.theme,p.age,names.length?`${names.length}メニュー`:'メニュー未選択'].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`;};
+    return `<button class="planrow" data-act="openPlan" data-id="${esc(p.id)}"><span class="grow"><b>${esc(planTitle(p))}</b><span class="meta">${esc([p.template?'':p.date,p.done?'実施ずみ':'',p.theme,p.age,names.length?`${names.length}メニュー`:'メニュー未選択'].filter(Boolean).join(' ・ '))}</span></span><span>›</span></button>`;};
   const ps=S.plans.filter(p=>!p.template).sort((a,b)=>b.date.localeCompare(a.date)||b.updated-a.updated);
   const ts=S.plans.filter(p=>p.template);
   return `<div class="bar"><button class="btn pri" data-act="newPlan">＋ 今日のトレーニングを作る</button></div>
@@ -676,18 +748,21 @@ function vPlan(id){
     <label class="f"><span>人数</span><input type="number" data-pf="players" min="1" inputmode="numeric" value="${p.players??''}"></label>
     <label class="f"><span>総時間（分）</span><input type="number" data-pf="totalMin" min="0" inputmode="numeric" value="${p.totalMin??''}"></label>
   </div></div>
-  <div class="bar"><h3 style="margin:0">メニュー</h3><span class="grow"></span><button class="btn sm" data-act="planAuto">おまかせで入れる</button></div>
+  <div class="bar"><h3 style="margin:0">メニュー</h3><span class="grow"></span><button class="btn sm" data-act="planTime">時間をふり分ける</button><button class="btn sm" data-act="planAuto">おまかせで入れる</button></div>
   ${totalHTML(p)}
   ${p.slots.map((s,i)=>{const c=card(s.cardId);return `<div class="slot s-${s.cat}" data-sid="${esc(s.id)}">
     <div class="slot-h"><span class="name">${esc(slotLabel(p,s))}</span><span class="grow"></span>
       <button class="iconbtn" data-act="slotUp" aria-label="上へ"${i===0?' disabled':''}>↑</button><button class="iconbtn" data-act="slotDown" aria-label="下へ"${i===p.slots.length-1?' disabled':''}>↓</button><button class="iconbtn" data-act="slotDel" aria-label="この枠を消す">×</button></div>
     ${c?`<div class="slot-card">${c.images[0]?`<img src="${c.images[0].src}" alt="">`:''}<div class="grow"><button class="t" data-act="open" data-id="${esc(c.id)}">${esc(c.name)}</button><p class="meta">${esc(cardMeta(c))}</p></div>
-      <button class="btn sm" data-act="pick">入れ替える</button><button class="btn sm" data-act="unpick">外す</button></div>`
+      <button class="btn sm" data-act="slotNext">ほかの候補</button><button class="btn sm" data-act="pick">えらぶ</button><button class="btn sm" data-act="unpick">外す</button></div>`
       :`<button class="pickbtn" data-act="pick">＋ ${esc(catLabel(s.cat))} のカードを選ぶ</button>`}
     <div class="slot-f"><input type="number" data-sf="minutes" min="0" inputmode="numeric" placeholder="${c&&c.minutes!=null?c.minutes:'分'}" value="${s.minutes??''}" aria-label="時間（分）"><input type="text" data-sf="memo" value="${esc(s.memo)}" placeholder="この日だけのメモ"></div>
+    ${p.done&&c?`<div class="rate"><span class="meta">できばえ</span>${[3,2,1].map(v=>`<button class="btn sm${s.rating===v?' pri':''}" data-act="rate" data-v="${v}">${RATE[v]}</button>`).join('')}<input type="text" data-sf="result" value="${esc(s.result)}" placeholder="やってみてどうだったか"></div>`:''}
   </div>`;}).join('')}
   <div class="bar"><span class="meta">枠を追加：</span>${CATS.map(c=>`<button class="btn sm" data-act="slotAdd" data-cat="${c.id}">＋ ${c.label}</button>`).join('')}</div>
-  <div class="panel"><label class="f" style="margin:0"><span>ふりかえり（実施後の記録）</span><textarea data-pf="review" placeholder="うまくいったこと、次回なおすこと">${esc(p.review)}</textarea></label></div>
+  <div class="panel">${p.template?'':`<label class="chip" style="margin-bottom:10px"><input type="checkbox" data-pf="done"${p.done?' checked':''}><span>この練習を実施した</span></label>
+    <p class="hint" style="margin:0 0 10px">チェックすると、各メニューに「できばえ」を付けられます。記録はカードに残り、次の「おまかせ」に活かされます。</p>`}
+    <label class="f" style="margin:0"><span>ふりかえり（実施後の記録）</span><textarea data-pf="review" placeholder="うまくいったこと、次回なおすこと">${esc(p.review)}</textarea></label></div>
   <div class="bar"><button class="btn" data-act="planDup">${p.template?'この型で計画を作る':'複製する'}</button><button class="btn" data-act="planTpl">${p.template?'ひな型をやめる':'ひな型にする'}</button><span class="grow"></span><button class="btn danger sm" data-act="planDel">削除</button></div>`;
 }
 const curPlan=()=>plan(view().id);
@@ -698,17 +773,43 @@ function candidates(p,s,o){
     &&(!o.age||!p.age||!c.ages.length||c.ages.includes(p.age))
     &&(!o.players||matchPlayers(c,p.players)));
 }
+// おまかせの点数：お気に入りと、できばえの良かったカードを優先。直近2週間に使ったカードは後回し。
+function pickScore(c,p,st){
+  const o=st.get(c.id);let sc=Math.random()*1.5+(c.fav?2:0);
+  if(!o)return sc+.5;
+  if(o.rn)sc+=(o.sum/o.rn-2)*1.5;
+  const d=(Date.parse(p.date)-Date.parse(o.last))/864e5;
+  if(d>=0&&d<14)sc-=2;
+  return sc;
+}
+function nextCandidate(p,s){
+  const others=new Set(p.slots.filter(x=>x!==s).map(x=>x.cardId));
+  let c=candidates(p,s,{theme:1,age:1,players:1}).filter(x=>!others.has(x.id));
+  if(c.length<2)c=candidates(p,s,{theme:1}).filter(x=>!others.has(x.id));
+  c.sort((a,b)=>a.name.localeCompare(b.name,'ja'));
+  if(!c.length||(c.length===1&&c[0].id===s.cardId))return null;
+  return c[(c.findIndex(x=>x.id===s.cardId)+1)%c.length];
+}
+function spreadTime(p){
+  if(p.totalMin==null){toast('さきに「総時間（分）」を入れてください');return;}
+  if(!p.slots.length)return;
+  if(p.slots.some(s=>s.minutes!=null)&&!confirm('いま入っている時間を、ふり分けなおしますか？'))return;
+  const W={wup:3,tr1:5,tr2:5,game:7},sum=p.slots.reduce((a,s)=>a+W[s.cat],0);
+  let rest=p.totalMin;
+  p.slots.forEach((s,i)=>{const m=i===p.slots.length-1?rest:Math.min(rest,Math.round(p.totalMin*W[s.cat]/sum/5)*5);s.minutes=Math.max(0,m);rest-=s.minutes;});
+  savePlan(p);render();toast('時間をふり分けました');
+}
 function autoFill(p){
   let targets=p.slots.filter(s=>!card(s.cardId));
   if(!targets.length){if(!confirm('すべての枠を入れなおしますか？'))return;targets=p.slots;}
-  const used=new Set(p.slots.filter(s=>!targets.includes(s)).map(s=>s.cardId));
+  const used=new Set(p.slots.filter(s=>!targets.includes(s)).map(s=>s.cardId)),st=cardStats();
   let ok=0;
   for(const s of targets){
     let c=candidates(p,s,{theme:1,age:1,players:1}).filter(x=>!used.has(x.id));
     if(!c.length)c=candidates(p,s,{theme:1}).filter(x=>!used.has(x.id));
     if(!c.length){s.cardId=null;continue;}
-    const favs=c.filter(x=>x.fav), pool=favs.length?favs:c, pickd=pool[Math.floor(Math.random()*pool.length)];
-    s.cardId=pickd.id;used.add(pickd.id);ok++;
+    const pickd=c.map(x=>[pickScore(x,p,st),x]).sort((a,b)=>b[0]-a[0])[0][1];
+    s.cardId=pickd.id;s.rating=0;s.result='';used.add(pickd.id);ok++;
   }
   savePlan(p);render();
   toast(ok===targets.length?`${ok}枠に入れました`:`${ok}枠に入れました。合うカードがない枠が${targets.length-ok}つあります`);
@@ -761,6 +862,12 @@ function vSettings(){
     <div class="bar" style="margin-top:10px"><button class="btn pri" data-act="export">書き出す（JSON）</button>
     <label class="btn" style="display:inline-flex;align-items:center">読みこむ<input type="file" id="importIn" accept=".json,application/json" hidden></label></div>
     <p class="hint">読みこみは「追加」です。同じカードは新しい内容で上書きされ、ほかのカードは消えません。</p></div>
+  <div class="panel"><h3>写真・PDFのよみとり（Gemini）</h3>
+    <p class="meta">いまの状態：${localStorage.getItem(LSK)?'APIキー登録ずみ':'APIキー未登録（よみとりは使えません）'}</p>
+    <label class="f" style="margin-top:8px"><span>Gemini APIキー</span><input type="password" id="gemKey" autocomplete="off" placeholder="${localStorage.getItem(LSK)?'登録ずみ（変えるときだけ入力）':'AIza...'}"></label>
+    <label class="f"><span>モデル名 <span class="hint">ふつうはこのままで大丈夫です</span></span><input type="text" id="gemModel" value="${esc(localStorage.getItem(LSM)||GEMINI_MODEL)}"></label>
+    <div class="bar"><button class="btn pri" data-act="gemSave">保存する</button>${localStorage.getItem(LSK)?'<button class="btn" data-act="gemClear">APIキーを消す</button>':''}</div>
+    <p class="hint">キーは Google AI Studio で作れます。キーはこの端末の中だけに保存され、書き出しファイルには入りません。よみとる写真・PDFは Google に送られます。</p></div>
   <div class="panel"><h3>テーマ（目的）の管理</h3>
     <div class="bar"><input type="text" id="themeAdd" placeholder="あたらしいテーマ" style="flex:1;min-width:160px"><button class="btn" data-act="themeAdd">追加</button></div>
     ${custom.length?custom.map(t=>`<div class="bar" style="margin-bottom:6px"><span>${esc(t.name)}</span><span class="grow"></span><button class="btn sm" data-act="themeDel" data-name="${esc(t.name)}">消す</button></div>`).join(''):'<p class="meta">自分で追加したテーマはまだありません。</p>'}</div>
@@ -833,6 +940,14 @@ const ACT={
   newPlan:()=>{const p=newPlan();S.plans.push(p);savePlan(p);go({name:'plan',id:p.id});},
   openPlan:el=>go({name:'plan',id:el.dataset.id}),
   planAuto:()=>autoFill(curPlan()),
+  planTime:()=>spreadTime(curPlan()),
+  slotNext:el=>{const p=curPlan(),s=slotOf(el),c=nextCandidate(p,s);if(!c){toast('ほかに合うカードがありません');return;}s.cardId=c.id;s.rating=0;s.result='';savePlan(p);render();},
+  rate:el=>{const p=curPlan(),s=slotOf(el),v=+el.dataset.v;s.rating=s.rating===v?0:v;savePlan(p);render();},
+  gemSave:()=>{const k=$('#gemKey').value.trim(),m=$('#gemModel').value.trim();if(k)localStorage.setItem(LSK,k);if(m)localStorage.setItem(LSM,m);else localStorage.removeItem(LSM);render();toast('保存しました');},
+  gemClear:()=>{localStorage.removeItem(LSK);render();toast('APIキーを消しました');},
+  scanSave:async()=>{const pick=$$('#modalBox [data-scan]').filter(x=>x.checked).map(x=>scanDraft[+x.dataset.scan]);if(!pick.length){toast('1つ以上えらんでください');return;}
+    for(const c of pick){await ensureThemes(c.themes);S.cards.push(c);await saveCard(c);}
+    scanDraft=null;ACT.closeModal();edit=null;stack=[{name:'library'}];render();toast(`${pick.length}枚を登録しました。内容を確認してください`);},
   planPrint:el=>printPlan(curPlan(),el.dataset.mode),
   planDup:()=>{const p=curPlan(),n=normPlan({...p,id:uid(),date:today(),title:p.template?'':p.title&&p.title+'（コピー）',template:false,review:'',slots:p.slots.map(s=>({...s,id:uid()})),created:Date.now()});
     S.plans.push(n);savePlan(n);stack.pop();go({name:'plan',id:n.id});toast('計画を作りました');},
@@ -864,6 +979,7 @@ document.addEventListener('input',e=>{
     else if(k==='fav')F.fav=t.checked;else F[k]=t.value;
     renderGrid();return;}
   if(t.dataset.pk&&picker){const k=t.dataset.pk;if(k==='q'){picker.q=t.value;const pos=t.selectionStart;renderPicker();const q=$('[data-pk=q]');q.focus();q.setSelectionRange(pos,pos);}else{picker[k]=t.checked;renderPicker();}return;}
+  if(t.dataset.pf==='done'){const p=curPlan();p.done=t.checked;savePlan(p);render();return;}
   if(t.dataset.pf){const p=curPlan(),k=t.dataset.pf;p[k]=(k==='players'||k==='totalMin')?num(t.value):t.value;savePlan(p);
     if(k==='totalMin')$('#total').outerHTML=totalHTML(p);return;}
   if(t.dataset.sf){const p=curPlan(),s=slotOf(t),k=t.dataset.sf;s[k]=k==='minutes'?num(t.value):t.value;savePlan(p);
@@ -872,6 +988,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',async e=>{
   const t=e.target;
   if(t.id==='imgIn'){for(const f of t.files){try{edit.images.push({src:await shrink(f),board:null});}catch(err){toast(err.message);}}t.value='';renderEditParts();}
+  if(t.id==='scanIn'&&t.files.length){const files=[...t.files];t.value='';await runScan(files);}
   if(t.id==='bfield'&&B){bSnap();B.board.field=t.value;drawBoard();}
   if(t.id==='opAdd'&&t.value){if(!edit.opIds.includes(t.value))edit.opIds.push(t.value);t.value='';renderEditParts();}
   if(t.id==='importIn'&&t.files[0]){await importData(await t.files[0].text());t.value='';}

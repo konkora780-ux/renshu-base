@@ -40,5 +40,5 @@ GitHub Pages：https://konkora780-ux.github.io/renshu-base/ （konkora780-ux/ren
 
 1. 済：カード登録、図鑑としぼり込み、今日のトレーニング、印刷（一覧版・詳細版）、JSONの書き出し・読みこみ、お手本カード
 2. 済：アプリ内の作図ボード（コート5種、選手・用具、パス／人の動き／ドリブルの線、わく、文字）。お手本6枚にも図を追加
-3. 未：写真・PDFからのよみとり、ふりかえりの活用
+3. 済：写真・PDFからのよみとり（Gemini。キーは localStorage `renshu-base.gemini`、モデル既定 `gemini-2.5-flash`）、実施の記録（`plan.done`・`slot.rating`・`slot.result` → `cardStats()`）、おまかせの改良（`pickScore()`）、時間のふり分け。**よみとりは実際のAPIでは未検証**（fetchを差しかえた模擬でのみ確認）
 4. 未：Supabaseでの共有、他競技、商用化の検討
