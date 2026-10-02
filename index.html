@@ -3076,22 +3076,46 @@ async function grpPutCard(c,quiet){
   await rpc('rb_put',{...gArgs(),p_owner:g.owner,p_author:g.me,p_id:c.id,p_kind:'card',p_summary:cardSummary(c),p_data:{...c,fav:false,memo:''}});
   if(!quiet)toast('グループに出しました');
 }
+// さそいコードは「グループコード-合言葉」。さそいのリンクは、アプリのURLの # のうしろにそれをつけたもの（# のうしろはサーバーに送られない）
+const inviteCode=g=>g.code+'-'+g.pass;
+const inviteLink=g=>location.origin+location.pathname+'#join='+encodeURIComponent(inviteCode(g));
+const inviteText=g=>`練習ベースのグループ「${g.name}」にさそいます。\n下のリンクを開いて、名前を入れると入れます。\n${inviteLink(g)}\n\nリンクで入れない時は、アプリの「グループ」で、さそいコードを入れてください。\nさそいコード：${inviteCode(g)}`;
+function parseInvite(v){
+  v=String(v||'').trim();const m=v.match(/#join=([^\s&]+)/);if(m){try{v=decodeURIComponent(m[1]);}catch{v=m[1];}}
+  const k=v.match(/^([A-Za-z0-9]{6})-(.+)$/s);return k?{code:k[1].toUpperCase(),pass:k[2]}:null;
+}
+const INV={pending:null,name:'',err:''};
+// さそいのリンクから開かれた時：グループ名を確かめて、「グループ」の画面に出す
+async function checkInvite(){
+  const m=location.hash.match(/^#join=(.+)$/);if(!m)return;
+  const inv=parseInvite(location.hash);history.replaceState(null,'',location.pathname+location.search);
+  if(!inv)return;
+  const g=grp();if(g&&g.code===inv.code){toast('このグループには、もう入っています');return;}
+  INV.pending=inv;INV.name='';INV.err='';stack=[{name:'group'}];render();
+  try{INV.name=(await rpc('rb_join',{p_code:inv.code,p_pass:inv.pass})).name;}catch(e){INV.err=e.message;}
+  if(view().name==='group')render();
+}
 function vGroup(){
   const g=grp();
-  if(!g)return `<div class="panel"><h3>グループで共有する</h3>
-    <p class="meta">知っている指導者どうしで、カードとひな型を見せ合えます。グループコードと合言葉を知っている人だけが入れます。出すのは、自分で「グループに出す」を押したものだけです。</p></div>
+  const invBox=INV.pending?`<div class="panel" style="border:2px solid #1f6f3d"><h3>グループにさそわれています</h3>
+    ${INV.err?`<p class="total over">${esc(INV.err)}</p><div class="bar"><button class="btn" data-act="grpInvCancel">とじる</button></div>`
+    :g?`<p class="meta">「${esc(INV.name||'…')}」にさそわれていますが、この端末はいま「${esc(g.name)}」に入っています。入れるグループは1つだけです。入りなおす時は、下の「グループから出る」を押してから、もう一度リンクを開いてください。</p><div class="bar"><button class="btn" data-act="grpInvCancel">とじる</button></div>`
+    :`<p class="meta">グループ「<b>${esc(INV.name||'（確かめています…）')}</b>」にさそわれています。名前を入れて「入る」を押してください。</p>
+      <label class="f"><span>じぶんの名前（グループの人に見えます）</span><input type="text" id="gMe0" autocomplete="off" maxlength="30"></label>
+      <div class="bar"><button class="btn pri" data-act="grpInvJoin">入る</button><button class="btn" data-act="grpInvCancel">やめる</button></div>`}</div>`:'';
+  if(!g)return invBox+`<div class="panel"><h3>グループで共有する</h3>
+    <p class="meta">知っている指導者どうしで、カードとひな型を見せ合えます。さそわれた人だけが入れます。出すのは、自分で「グループに出す」を押したものだけです。</p></div>
   <div class="panel"><h3>グループに入る</h3>
-    <div class="grid2"><label class="f"><span>グループコード（6文字）</span><input type="text" id="gCode" autocomplete="off" autocapitalize="characters" maxlength="6"></label>
-    <label class="f"><span>合言葉</span><input type="text" id="gPass" autocomplete="off"></label>
+    <p class="meta">さそいのリンクを開くと、名前を入れるだけで入れます。リンクで入れない時は、届いた「さそいコード」（またはリンクそのもの）を下に貼ってください。</p>
+    <div class="grid2"><label class="f"><span>さそいコード</span><input type="text" id="gInv" autocomplete="off" placeholder="例：ABC234-xxxxxxxx"></label>
     <label class="f"><span>じぶんの名前（グループの人に見えます）</span><input type="text" id="gMe" autocomplete="off" maxlength="30"></label></div>
     <div class="bar"><button class="btn pri" data-act="grpJoin">入る</button></div></div>
   <div class="panel"><h3>あたらしくグループを作る</h3>
     <div class="grid2"><label class="f"><span>グループ名</span><input type="text" id="gName" autocomplete="off" maxlength="40" placeholder="例：○○FC コーチ"></label>
-    <label class="f"><span>合言葉（6文字以上。入る人に伝えます）</span><input type="text" id="gNewPass" autocomplete="off"></label>
     <label class="f"><span>作成キー</span><input type="text" id="gKey" autocomplete="off"></label>
     <label class="f"><span>じぶんの名前</span><input type="text" id="gMe2" autocomplete="off" maxlength="30"></label></div>
     <div class="bar"><button class="btn" data-act="grpCreate">作る</button></div>
-    <p class="hint">作成キーは、グループを作る人だけが使う文字です（共有の準備をした時に決めたもの）。入る人には伝えません。</p></div>`;
+    <p class="hint">作成キーは、グループを作る人だけが使う文字です（共有の準備をした時に決めたもの）。さそう相手には伝えません。合言葉は自動で決まり、さそいのリンクに入ります。</p></div>`;
   const L=GR.list||[],cs=L.filter(x=>x.kind==='card'),ps=L.filter(x=>x.kind==='plan');
   const state=x=>{const loc=x.kind==='card'?card(x.id):plan(x.id);if(!loc)return 'new';return ((x.summary||{}).u||0)>loc.updated?'old':'have';};
   const row=x=>{const sm=x.summary||{},st=state(x),b=sm.board?normBoard(sm.board):null;
@@ -3100,11 +3124,17 @@ function vGroup(){
     return `<div class="slot"><div class="slot-card">${b?`<img src="${svgURL(b)}" alt="">`:''}<div class="grow"><b>${esc(sm.name||'（名前なし）')}</b><p class="meta">${esc(meta)}</p><p class="meta">${esc(x.author||'名前なし')} さん ・ ${esc(String(x.updated_at).slice(0,10))}${x.mine?' ・ じぶんが出したもの':''}</p></div>
       ${st==='have'?`<span class="meta">入れてあります</span>`:`<button class="btn sm pri" data-act="grpTake" data-id="${esc(x.id)}"${GR.busy===x.id?' disabled':''}>${st==='old'?'新しい版に更新':x.kind==='card'?'じぶんの図鑑に入れる':'じぶんのひな型に入れる'}</button>`}
       ${x.mine?`<button class="btn sm" data-act="grpDrop" data-id="${esc(x.id)}">取り下げる</button>`:''}</div></div>`;};
-  return `<div class="panel"><h3>${esc(g.name)}</h3>
-    <p class="meta">グループコード <b style="font-size:18px;letter-spacing:2px">${esc(g.code)}</b>　じぶんの名前：${esc(g.me)}</p>
-    <p class="hint">ほかの人をさそう時は、このグループコードと合言葉を伝えてください。出したい時は、カードやじぶんのひな型を開いて「グループに出す」を押します。</p>
+  return invBox+`<div class="panel"><h3>${esc(g.name)}</h3>
+    <p class="meta">じぶんの名前：${esc(g.me)}</p>
+    <p class="hint">出したい時は、カードやじぶんのひな型を開いて「グループに出す」を押します。</p>
     <div class="bar"><button class="btn pri" data-act="grpReload"${GR.loading?' disabled':''}>${GR.loading?'読みこみ中…':'一覧を更新'}</button><span class="grow"></span><button class="btn sm" data-act="grpLeave">グループから出る</button></div>
     ${GR.err?`<p class="total over">${esc(GR.err)}</p>`:''}</div>
+  <div class="panel"><h3>ほかの人をさそう</h3>
+    <p class="meta">さそいのリンクを送ります。受け取った人は、リンクを開いて名前を入れるだけで入れます。</p>
+    <div class="bar">${navigator.share?'<button class="btn pri" data-act="grpShare">送る（LINE・メッセージなど）</button>':''}<button class="btn" data-act="grpCopy">さそいの文をコピー</button></div>
+    <div class="grid2" style="margin-top:10px"><div><label class="f"><span>電話番号でさそう（SMS）</span><input type="tel" id="gTel" autocomplete="off" inputmode="tel" placeholder="例：09012345678"></label><button class="btn" data-act="grpSms">SMSの画面をひらく</button></div>
+    <div><label class="f"><span>メールでさそう</span><input type="email" id="gMail" autocomplete="off" inputmode="email" placeholder="例：coach@example.com"></label><button class="btn" data-act="grpMail">メールの画面をひらく</button></div></div>
+    <p class="hint">この端末のメッセージ／メールのアプリが、文面の入った状態で開きます。送信はそちらで押してください。電話番号とメールアドレスは、どこにも保存されません。リンクを知っている人はだれでも入れるので、送る相手に気をつけてください。</p></div>
   <h3>カード（${cs.length}）</h3>${cs.length?cs.map(row).join(''):`<p class="meta">${GR.list?'まだ出されていません。':'「一覧を更新」を押すと表示されます。'}</p>`}
   <h3>ひな型（${ps.length}）</h3>${ps.length?ps.map(row).join(''):`<p class="meta">${GR.list?'まだ出されていません。':''}</p>`}`;
 }
@@ -3122,12 +3152,22 @@ function render(){
 
 /* ========== 操作 ========== */
 const ACT={
-  grpJoin:async()=>{const code=$('#gCode').value.trim().toUpperCase(),pass=$('#gPass').value,me=$('#gMe').value.trim();
-    if(!code||!pass||!me){toast('グループコード・合言葉・名前を入れてください');return;}
-    try{const r=await rpc('rb_join',{p_code:code,p_pass:pass});setGrp({code,pass,name:r.name,me,owner:crypto.randomUUID()});GR.list=null;render();toast(`「${r.name}」に入りました`);grpLoad();}catch(e){toast(e.message);}},
-  grpCreate:async()=>{const name=$('#gName').value.trim(),pass=$('#gNewPass').value,key=$('#gKey').value.trim(),me=$('#gMe2').value.trim();
-    if(!name||!pass||!key||!me){toast('4つの欄をすべて入れてください');return;}
-    try{const code=await rpc('rb_create_group',{p_key:key,p_name:name,p_pass:pass});setGrp({code,pass,name,me,owner:crypto.randomUUID()});GR.list=[];render();toast('グループを作りました');}catch(e){toast(e.message);}},
+  grpJoin:async()=>{const inv=parseInvite($('#gInv').value),me=$('#gMe').value.trim();
+    if(!inv){toast('さそいコードを入れてください（届いた文にある「ABC234-…」の形の文字）');return;}if(!me){toast('名前を入れてください');return;}
+    await ACT.grpEnter(inv,me);},
+  grpEnter:async(inv,me)=>{try{const r=await rpc('rb_join',{p_code:inv.code,p_pass:inv.pass});setGrp({code:inv.code,pass:inv.pass,name:r.name,me,owner:crypto.randomUUID()});INV.pending=null;GR.list=null;render();toast(`「${r.name}」に入りました`);grpLoad();}catch(e){toast(e.message);}},
+  grpInvJoin:async()=>{const me=$('#gMe0').value.trim();if(!me){toast('名前を入れてください');return;}await ACT.grpEnter(INV.pending,me);},
+  grpInvCancel:()=>{INV.pending=null;render();},
+  grpCreate:async()=>{const name=$('#gName').value.trim(),key=$('#gKey').value.trim(),me=$('#gMe2').value.trim();
+    if(!name||!key||!me){toast('3つの欄をすべて入れてください');return;}
+    const abc='abcdefghjkmnpqrstuvwxyz23456789',pass=[...crypto.getRandomValues(new Uint8Array(12))].map(b=>abc[b%abc.length]).join('');
+    try{const code=await rpc('rb_create_group',{p_key:key,p_name:name,p_pass:pass});setGrp({code,pass,name,me,owner:crypto.randomUUID()});GR.list=[];render();toast('グループを作りました。「ほかの人をさそう」から、さそえます');}catch(e){toast(e.message);}},
+  grpShare:()=>{const g=grp();navigator.share({title:'練習ベースのグループ',text:inviteText(g)}).catch(()=>{});},
+  grpCopy:async()=>{try{await navigator.clipboard.writeText(inviteText(grp()));toast('さそいの文をコピーしました。メッセージなどに貼って送ってください');}catch{prompt('下の文をコピーして送ってください',inviteText(grp()));}},
+  grpSms:()=>{const n=$('#gTel').value.replace(/[^0-9+]/g,'');if(n.length<10){toast('電話番号を入れてください');return;}
+    location.href='sms:'+n+(isIOS?'&':'?')+'body='+encodeURIComponent(inviteText(grp()));},
+  grpMail:()=>{const a=$('#gMail').value.trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(a)){toast('メールアドレスを入れてください');return;}
+    location.href='mailto:'+a+'?subject='+encodeURIComponent('練習ベースのグループへのおさそい')+'&body='+encodeURIComponent(inviteText(grp()));},
   grpLeave:()=>{if(!confirm('この端末をグループから出します。グループに出したものは残ります（取り下げたい時は、先に「取り下げる」を押してください）。出ますか？'))return;setGrp(null);GR.list=null;GR.err='';render();},
   grpReload:()=>grpLoad(),
   grpPut:async el=>{const c=card(el.dataset.id);
@@ -3265,7 +3305,7 @@ window.addEventListener('afterprint',()=>{$('#print').innerHTML='';});
     for(const k of ['tplfix','seedfig','seedfig2','pack2','pack3','pack4','pack5','pack6','pack7','pack8','pack9','pack10','pack11']){if(!get(k))await dbPut('meta',{key:k,value:1});}
     if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
   }catch(err){console.error(err);$('#main').innerHTML='<div class="empty">データの保存場所をひらけませんでした。プライベートブラウズを切って、もう一度ひらいてください。</div>';return;}
-  render();
+  render();checkInvite();window.addEventListener('hashchange',checkInvite);
   if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();
 </script>
